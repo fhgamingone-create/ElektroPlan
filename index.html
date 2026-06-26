@@ -1,85 +1,89 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ElektroPlan Österreich</title>
-  <link rel="stylesheet" href="css/style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ElektroPlan Österreich</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--text:#111827;--muted:#667085;--line:#e5e7eb;--blue:#007aff;--red:#ef4444;--green:#16a34a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.app{max-width:760px;margin:auto;padding:18px 14px 95px}.top{padding:16px 6px 8px}h1{font-size:30px;margin:0}.sub{color:var(--muted);font-size:14px;margin-top:4px}
+.card{background:var(--card);border-radius:22px;padding:16px;margin:14px 0;box-shadow:0 8px 24px rgba(16,24,40,.10)}.card h2{margin:0 0 12px;font-size:22px}
+label{font-weight:800;display:block;margin:12px 0 7px}input,select,button{width:100%;font-size:16px;border-radius:15px;padding:14px;border:1px solid #cfd4dc;background:white}
+button{border:0;background:var(--blue);color:white;font-weight:900;margin-top:10px}button.secondary{background:#e8edf3;color:#101828}button.danger{background:var(--red)}button.green{background:var(--green)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(243,245,248,.96);border-top:1px solid var(--line);backdrop-filter:blur(10px);z-index:100}
+.tabsInner{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px}.tabs button{margin:0;padding:10px 2px;font-size:12px;background:#e8edf3;color:#101828}.tabs button.active{background:var(--blue);color:white}
+.hidden{display:none!important}.roomCard,.doseCard{background:#fbfcfe;border:1px solid var(--line);border-radius:18px;padding:13px;margin:10px 0}.rowHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.name{font-weight:900;font-size:18px}.meta{color:var(--muted);font-size:13px;margin-top:4px}.pill{display:inline-block;background:#eaf4ff;color:#075985;border-radius:999px;padding:5px 10px;margin:5px 4px 0 0;font-size:13px;font-weight:800}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:560px){.checks{grid-template-columns:1fr}}.check{display:flex;align-items:center;gap:9px;background:#f8fafc;border:1px solid var(--line);padding:11px;border-radius:15px;font-weight:800}.check input{width:auto}
+.wire{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:15px}.dot{width:23px;height:23px;border-radius:50%;border:1px solid #333;flex:0 0 23px}.brown{background:#7b3f00}.blue{background:#0074d9}.black{background:#111}.grey{background:#999}.orange{background:#f59e0b}.violet{background:#7e22ce}.greenyellow{background:linear-gradient(90deg,green 50%,yellow 50%)}
+.notice{background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:13px;line-height:1.4}.ok{background:#ecfdf3;color:#166534;border-radius:16px;padding:12px;font-size:13px;line-height:1.4}.empty{color:var(--muted);padding:12px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}.quickActions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+</style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>ElektroPlan Österreich</h1>
-      <p>Projektplaner für Dosen, Leiter und Material</p>
-    </header>
+<div class="app">
+  <div class="top"><h1>⚡ ElektroPlan</h1><div class="sub">Österreich · Sterninstallation · v2.0</div></div>
 
-    <nav>
-      <button onclick="showTab('projekt')">Projekt</button>
-      <button onclick="showTab('raeume')">Räume</button>
-      <button onclick="showTab('dosen')">Dosen</button>
-      <button onclick="showTab('auswertung')">Auswertung</button>
-    </nav>
+  <section id="homeView"><div class="card"><h2>🏠 Projekt</h2>
+    <label>Projektname</label><input id="projectName" placeholder="z. B. EFH Maier">
+    <div class="grid"><div><label>Kunde</label><input id="customer" placeholder="z. B. Maier"></div><div><label>Ort</label><input id="place" placeholder="z. B. Linz"></div></div>
+    <button onclick="saveProject()">Projekt speichern</button><button class="secondary" onclick="loadExample()">Beispiel laden</button>
+    <div id="projectStatus" class="ok" style="margin-top:12px"></div></div>
+    <div class="card"><h2>📍 Räume</h2><div id="roomOverview"></div><button onclick="go('roomsView')">Raum verwalten</button></div>
+  </section>
 
-    <main>
-      <section id="projekt" class="tab">
-        <div class="card">
-          <h2>Projekt</h2>
-          <label>Projektname</label>
-          <input id="projektName" placeholder="z. B. Einfamilienhaus" />
-          <label>Kunde</label>
-          <input id="kunde" placeholder="z. B. Müller" />
-          <label>Ort</label>
-          <input id="ort" placeholder="z. B. Linz" />
-          <button onclick="saveProject()">Projekt speichern</button>
-          <button class="secondary" onclick="loadExample()">Beispiel laden</button>
-          <button class="danger" onclick="clearAll()">Alles löschen</button>
-          <p id="status"></p>
-        </div>
-      </section>
+  <section id="roomsView" class="hidden"><div class="card"><h2>📍 Raum hinzufügen</h2><label>Raumname</label><input id="newRoom" placeholder="z. B. Wohnzimmer"><button onclick="addRoom()">Raum speichern</button></div><div class="card"><h2>Alle Räume</h2><div id="roomList"></div></div></section>
 
-      <section id="raeume" class="tab hidden">
-        <div class="card">
-          <h2>Raum hinzufügen</h2>
-          <input id="raumName" placeholder="z. B. Wohnzimmer" />
-          <button onclick="addRoom()">Raum speichern</button>
-        </div>
-        <div class="card">
-          <h2>Räume</h2>
-          <div id="roomList"></div>
-        </div>
-      </section>
+  <section id="dosesView" class="hidden"><div class="card"><h2>📦 Dose anlegen</h2>
+    <div class="grid"><div><label>Raum</label><select id="doseRoom"></select></div><div><label>Name</label><input id="doseName" placeholder="z. B. WZ-01"></div></div>
+    <div class="grid"><div><label>Dosenart</label><select id="doseType"><option>1-fach Dose</option><option>2-fach Dose</option><option>3-fach Dose</option><option>Lampenauslass</option><option>Verteiler</option></select></div><div><label>Versorgung</label><select id="supply"><option>Von Verteilung</option><option>Von anderer Dose</option><option>Durchgeschleift</option></select></div></div>
+    <label>Geräte in dieser Dose</label><div id="deviceChecks" class="checks"></div>
+    <button onclick="saveDose()">Dose speichern</button><button class="secondary" onclick="resetDoseForm()">Formular leeren</button></div>
+    <div class="card"><h2>📦 Dosenliste</h2><div id="doseList"></div></div>
+  </section>
 
-      <section id="dosen" class="tab hidden">
-        <div class="card">
-          <h2>Dose anlegen</h2>
-          <label>Raum</label><select id="doseRoom"></select>
-          <label>Name der Dose</label><input id="doseName" placeholder="z. B. WZ-01" />
-          <label>Dosenart</label>
-          <select id="doseType">
-            <option>1-fach Dose</option><option>2-fach Dose</option><option>3-fach Dose</option>
-            <option>Lampenauslass</option><option>Verteiler</option>
-          </select>
-          <label>Versorgung</label>
-          <select id="supply">
-            <option>Von Verteilung</option><option>Von anderer Dose</option><option>Durchgeschleift</option>
-          </select>
-          <label>Geräte</label>
-          <div id="deviceChecks" class="checks"></div>
-          <button onclick="saveDose()">Dose speichern</button>
-          <button class="secondary" onclick="resetDoseForm()">Formular leeren</button>
-        </div>
-        <div class="card"><h2>Dosenliste</h2><div id="doseList"></div></div>
-      </section>
+  <section id="wiresView" class="hidden"><div class="card"><h2>🔌 Leiter je Dose</h2><div id="wireList"></div></div></section>
 
-      <section id="auswertung" class="tab hidden">
-        <div class="card"><h2>Leiter je Dose</h2><div id="wireList"></div></div>
-        <div class="card"><h2>Materialliste</h2><div id="materialList"></div></div>
-        <div class="warning">Nur Planungshilfe. Ausführung, ÖVE/ÖNORM, Schutzmaßnahmen, Querschnitt, Absicherung, Häufung, Spannungsfall und Rohrfüllung fachlich prüfen lassen.</div>
-      </section>
-    </main>
-  </div>
-  <script src="js/rules.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/app.js"></script>
+  <section id="materialView" class="hidden"><div class="card"><h2>📋 Materialliste</h2><div id="materialList"></div></div><div class="card"><h2>💾 Sicherung</h2><div class="quickActions"><button class="green" onclick="exportProject()">Export</button><button class="secondary" onclick="document.getElementById('importFile').click()">Import</button></div><input id="importFile" type="file" accept=".json" class="hidden" onchange="importProject(event)"><button class="danger" onclick="clearAll()">Alles löschen</button></div><div class="notice">Nur Planungshilfe. ÖVE/ÖNORM, Schutzmaßnahmen, Querschnitt, Absicherung, Häufung, Spannungsfall und Rohrfüllung fachlich prüfen lassen.</div></section>
+</div>
+
+<div class="tabs"><div class="tabsInner"><button id="tabHome" onclick="go('homeView')">Projekt</button><button id="tabRooms" onclick="go('roomsView')">Räume</button><button id="tabDoses" onclick="go('dosesView')">Dosen</button><button id="tabWires" onclick="go('wiresView')">Leiter</button><button id="tabMat" onclick="go('materialView')">Material</button></div></div>
+
+<script>
+const RULES={"Steckdose":["L Steckdose","N Steckdose","PE"],"Lampe":["L geschaltet","N Licht","PE"],"Schalter":["L Licht","L geschaltet zurück"],"Serienschalter":["L Licht","L1 geschaltet zurück","L2 geschaltet zurück"],"Wechselschalter erster":["L Licht","K1","K2"],"Wechselschalter letzter":["K1","K2","L geschaltet zurück"],"Kreuzschalter":["K1 rein","K2 rein","K1 raus","K2 raus"]};
+const COLORS={"L Steckdose":"brown","N Steckdose":"blue","PE":"greenyellow","L Licht":"black","N Licht":"blue","L geschaltet":"black","L geschaltet zurück":"black","L1 geschaltet zurück":"black","L2 geschaltet zurück":"grey","K1":"black","K2":"grey","K1 rein":"black","K2 rein":"grey","K1 raus":"brown","K2 raus":"orange"};
+const KEY="elektroplan_at_v2";let editIndex=null;let data=load();
+function fresh(){return{project:{name:"",customer:"",place:"",country:"Österreich"},rooms:["Wohnzimmer"],doses:[]}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||fresh()}catch{return fresh()}}
+function store(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function go(view){["homeView","roomsView","dosesView","wiresView","materialView"].forEach(v=>document.getElementById(v).classList.add("hidden"));document.getElementById(view).classList.remove("hidden");document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));if(view==="homeView")tabHome.classList.add("active");if(view==="roomsView")tabRooms.classList.add("active");if(view==="dosesView")tabDoses.classList.add("active");if(view==="wiresView")tabWires.classList.add("active");if(view==="materialView")tabMat.classList.add("active");window.scrollTo(0,0)}
+function saveProject(){data.project.name=projectName.value.trim();data.project.customer=customer.value.trim();data.project.place=place.value.trim();store()}
+function addRoom(){const r=newRoom.value.trim();if(!r)return alert("Bitte Raumname eingeben.");if(!data.rooms.includes(r))data.rooms.push(r);newRoom.value="";store()}
+function deleteRoom(r){if(!confirm("Raum löschen? Dosen bleiben erhalten."))return;data.rooms=data.rooms.filter(x=>x!==r);store()}
+function renderDeviceChecks(){deviceChecks.innerHTML=Object.keys(RULES).map(g=>`<label class="check"><input type="checkbox" value="${g}"> ${g}</label>`).join("")}
+function selectedDevices(){return Array.from(document.querySelectorAll("#deviceChecks input:checked")).map(x=>x.value)}
+function saveDose(){if(!data.rooms.length)return alert("Bitte zuerst Raum anlegen.");const d={room:doseRoom.value,name:doseName.value.trim()||autoName(),type:doseType.value,supply:supply.value,devices:selectedDevices()};if(!d.devices.length)return alert("Bitte mindestens ein Gerät auswählen.");if(editIndex===null)data.doses.push(d);else{data.doses[editIndex]=d;editIndex=null}resetDoseForm();store()}
+function autoName(){const r=doseRoom.value||"D";return r.slice(0,2).toUpperCase()+"-"+String(data.doses.length+1).padStart(2,"0")}
+function resetDoseForm(){editIndex=null;doseName.value="";doseType.value="1-fach Dose";supply.value="Von Verteilung";document.querySelectorAll("#deviceChecks input").forEach(x=>x.checked=false)}
+function editDose(i){const d=data.doses[i];editIndex=i;doseRoom.value=d.room;doseName.value=d.name;doseType.value=d.type;supply.value=d.supply;document.querySelectorAll("#deviceChecks input").forEach(x=>x.checked=d.devices.includes(x.value));go("dosesView")}
+function deleteDose(i){if(!confirm("Dose löschen?"))return;data.doses.splice(i,1);store()}
+function wiresFor(d){const s=new Set();d.devices.forEach(g=>(RULES[g]||[]).forEach(w=>s.add(w)));return Array.from(s)}
+function suggestion(n){if(n<=2)return"2 Einzeldrähte 1,5 mm² im Schlauch";if(n<=3)return"3 Einzeldrähte / 3×1,5";if(n<=5)return"5 Einzeldrähte / 5×1,5";if(n<=7)return"7 Einzeldrähte oder 2 Schläuche";return"Auf mehrere Schläuche aufteilen"}
+function wireHTML(w){return`<div class="wire"><span class="dot ${COLORS[w]||"violet"}"></span><span>${w}</span></div>`}
+function render(){projectName.value=data.project.name||"";customer.value=data.project.customer||"";place.value=data.project.place||"";projectStatus.innerHTML=`Projekt: <b>${data.project.name||"Ohne Namen"}</b><br>Räume: ${data.rooms.length} · Dosen: ${data.doses.length}`;
+roomOverview.innerHTML=data.rooms.length?data.rooms.map(r=>`<div class="roomCard"><div class="rowHead"><div><div class="name">📍 ${r}</div><div class="meta">${data.doses.filter(d=>d.room===r).length} Dosen</div></div><button class="secondary" onclick="go('dosesView')" style="width:100px">Dosen</button></div></div>`).join(""):`<div class="empty">Noch keine Räume.</div>`;
+roomList.innerHTML=data.rooms.length?data.rooms.map(r=>`<div class="roomCard"><div class="rowHead"><div><div class="name">${r}</div><div class="meta">${data.doses.filter(d=>d.room===r).length} Dosen</div></div><button class="danger" onclick="deleteRoom('${r.replaceAll("'","\'")}')" style="width:100px">Löschen</button></div></div>`).join(""):`<div class="empty">Noch keine Räume.</div>`;
+doseRoom.innerHTML=data.rooms.map(r=>`<option>${r}</option>`).join("");
+doseList.innerHTML=data.doses.length?data.doses.map((d,i)=>`<div class="doseCard"><div class="rowHead"><div><div class="name">📦 ${d.name}</div><div class="meta">${d.room} · ${d.type} · ${d.supply}</div><div>${d.devices.map(x=>`<span class="pill">${x}</span>`).join("")}</div></div><div style="width:95px"><button class="secondary" onclick="editDose(${i})">Ändern</button><button class="danger" onclick="deleteDose(${i})">Löschen</button></div></div></div>`).join(""):`<div class="empty">Noch keine Dosen.</div>`;
+wireList.innerHTML=data.doses.length?data.doses.map(d=>{const w=wiresFor(d);return`<div class="doseCard"><div class="name">🔌 ${d.name}</div><div class="meta">${d.room} · ${d.devices.join(", ")}</div><div style="margin:10px 0">${w.map(wireHTML).join("")}</div><b>${w.length} Drähte</b><div class="meta">Vorschlag: ${suggestion(w.length)}</div></div>`}).join(""):`<div class="empty">Noch keine Dosen.</div>`;
+renderMaterial()}
+function renderMaterial(){const dc={},gc={};data.doses.forEach(d=>{dc[d.type]=(dc[d.type]||0)+1;d.devices.forEach(g=>gc[g]=(gc[g]||0)+1)});const rows=data.doses.map(d=>{const n=wiresFor(d).length;return`<tr><td>${d.name}</td><td>${d.room}</td><td>${n}</td><td>${suggestion(n)}</td></tr>`}).join("");materialList.innerHTML=data.doses.length?`<h3>Dosenarten</h3>${Object.entries(dc).map(([k,v])=>`<div>${v} × ${k}</div>`).join("")}<h3>Geräte</h3>${Object.entries(gc).map(([k,v])=>`<div>${v} × ${k}</div>`).join("")}<h3>Übersicht</h3><table><tr><th>Dose</th><th>Raum</th><th>Drähte</th><th>Vorschlag</th></tr>${rows}</table>`:`<div class="empty">Noch keine Dosen.</div>`}
+function loadExample(){data={project:{name:"Testprojekt",customer:"",place:"Österreich",country:"Österreich"},rooms:["Wohnzimmer","Küche"],doses:[{room:"Wohnzimmer",name:"WZ-01",type:"2-fach Dose",supply:"Von Verteilung",devices:["Steckdose","Schalter"]},{room:"Wohnzimmer",name:"WZ-02",type:"1-fach Dose",supply:"Von Verteilung",devices:["Wechselschalter erster"]},{room:"Wohnzimmer",name:"WZ-03",type:"1-fach Dose",supply:"Von Verteilung",devices:["Wechselschalter letzter"]},{room:"Wohnzimmer",name:"L-01",type:"Lampenauslass",supply:"Von Verteilung",devices:["Lampe"]}]};store()}
+function exportProject(){const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(data.project.name||"elektroplan").replaceAll(" ","_")+".json";a.click();URL.revokeObjectURL(a.href)}
+function importProject(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{data=JSON.parse(r.result);store();alert("Import fertig.")}catch{alert("Import fehlgeschlagen.")}};r.readAsText(f)}
+function clearAll(){if(!confirm("Alles löschen?"))return;data=fresh();store()}
+renderDeviceChecks();render();go("homeView");
+</script>
 </body>
-</html>
