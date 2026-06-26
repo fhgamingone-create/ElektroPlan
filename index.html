@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ElektroPlan V6.1</title>
+<title>ElektroPlan V6.2</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -51,21 +51,18 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V6.1</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V6.2</span></h1>
   <div class="sectionTitle">Projekte</div><div id="projectList"></div><button onclick="createProject()">+ Neues Projekt</button>
   <div class="sectionTitle">Räume</div><div id="roomList"></div>
   <div class="sectionTitle">Dosen im Raum</div><div id="sideDoseList"></div>
   <div class="sectionTitle">Legende</div>
   <div class="muted">
-    <svg width="220" height="210" viewBox="0 0 220 210">
-      <g stroke="#111" fill="none" stroke-width="1.6">
-        <path d="M15 20 l30 0 m15 -18 v36 m-15 -18 q15 0 30 0"/><text x="95" y="25" fill="#111" stroke="none" font-size="13">Steckdose</text>
-        <path d="M15 55 l28 0 m15 -18 v36 m-15 -18 q15 0 30 0 m15 -18 v36 m-15 -18 q15 0 30 0"/><text x="120" y="60" fill="#111" stroke="none" font-size="13">Doppel-Steckdose</text>
-        <circle cx="42" cy="95" r="10"/><line x1="35" y1="88" x2="22" y2="75"/><line x1="49" y1="88" x2="65" y2="75"/><text x="95" y="100" fill="#111" stroke="none" font-size="13">Wechsel</text>
-        <circle cx="42" cy="132" r="10"/><line x1="35" y1="125" x2="22" y2="113"/><line x1="49" y1="125" x2="65" y2="113"/><line x1="35" y1="139" x2="22" y2="151"/><line x1="49" y1="139" x2="65" y2="151"/><text x="95" y="137" fill="#111" stroke="none" font-size="13">Kreuz</text>
-        <circle cx="42" cy="172" r="10"/><line x1="35" y1="165" x2="25" y2="150"/><line x1="49" y1="165" x2="60" y2="150"/><line x1="42" y1="182" x2="42" y2="197"/><text x="95" y="177" fill="#111" stroke="none" font-size="13">Serien</text>
-      </g>
-    </svg>
+    <div>Wechselschaltung</div>
+    <div>Kreuzschaltung</div>
+    <div>Serienschaltung</div>
+    <div>Deckenleuchte</div>
+    <div>Steckdose / Doppel / Dreifach</div>
+    <div>Netzwerkdose</div>
   </div>
 </aside>
 
@@ -85,7 +82,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
       <label>Projektname</label><input id="projectName" oninput="renameProject()" placeholder="z. B. EFH Maier">
       <div class="grid">
         <div><label>Aktiver Raum</label><select id="roomSelect" onchange="roomChanged()"></select></div>
-        <div><label>Neue Sicherung</label><div class="grid"><select id="breakerType"><option>B</option><option selected>C</option></select><select id="breakerAmp"><option>10</option><option>13</option><option selected>16</option><option>20</option></select></div><button class="secondary" onclick="saveBreaker()">Sicherung speichern</button></div>
+        <div><label>Sicherung</label><input value="F1 C16A" disabled></div>
       </div>
       <div class="grid">
         <div><label>Neuer Raum</label><input id="newRoom" placeholder="z. B. Büro"><button class="secondary" onclick="addRoom()">Raum hinzufügen</button></div>
@@ -124,7 +121,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <div class="footer"><span>✅ Automatisch gespeichert</span><span id="footerStats"></span></div>
 
 <script>
-const KEY="elektroplan_v61";
+const KEY="elektroplan_v62";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 let db=loadDB(), currentId=db.currentId||null, activeRoom="Wohnzimmer", editIndex=null;
@@ -139,7 +136,7 @@ function ensure(){if(!db.projects.length){let p=freshProject("EFH Maier");db.pro
 function createProject(){let p=freshProject("Neues Projekt");db.projects.push(p);currentId=p.id;activeRoom="Wohnzimmer";store();show("Overview")}
 function openProject(id){currentId=id;activeRoom=current().rooms[0]||"Wohnzimmer";store()}
 function renameProject(){let p=current();if(!p)return;p.name=projectName.value||"Ohne Namen";localStorage.setItem(KEY,JSON.stringify(db));renderSelectorsOnly()}
-function saveBreaker(){let p=current();p.breakerType=breakerType.value;p.breakerAmp=breakerAmp.value;store()}
+function saveBreaker(){}
 function deleteCurrentProject(){let p=current();if(!p)return;if(!confirm("Projekt löschen?"))return;db.projects=db.projects.filter(x=>x.id!==p.id);currentId=db.projects[0]?.id||null;store();show("Overview")}
 function addRoom(){let p=current(),r=newRoom.value.trim();if(!p||!r)return;if(!p.rooms.includes(r))p.rooms.push(r);activeRoom=r;newRoom.value="";store()}
 function roomChanged(){activeRoom=roomSelect.value;store()}
@@ -166,11 +163,54 @@ function wireHTML(w){return `<div class="wire"><span class="dot ${wireColor(w)}"
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
 function compSymbol(device,x,y){let s=`<g stroke="#111" fill="none" stroke-width="1.6">`;if(device==="Steckdose"){s+=`<path d="M${x-25} ${y} h20 m15 -18 v36 m-15 -18 q15 0 30 0"/>`}else if(device==="Steckdose 2"){s+=`<path d="M${x-35} ${y} h18 m15 -18 v36 m-15 -18 q15 0 30 0 m15 -18 v36 m-15 -18 q15 0 30 0"/>`}else if(device==="Wechselschalter"){s+=`<circle cx="${x}" cy="${y}" r="10"/><line x1="${x-7}" y1="${y-7}" x2="${x-24}" y2="${y-22}"/><line x1="${x+7}" y1="${y-7}" x2="${x+24}" y2="${y-22}"/>`}else if(device==="Kreuzschalter"){s+=`<circle cx="${x}" cy="${y}" r="10"/><line x1="${x-7}" y1="${y-7}" x2="${x-24}" y2="${y-22}"/><line x1="${x+7}" y1="${y-7}" x2="${x+24}" y2="${y-22}"/><line x1="${x-7}" y1="${y+7}" x2="${x-24}" y2="${y+22}"/><line x1="${x+7}" y1="${y+7}" x2="${x+24}" y2="${y+22}"/>`}else if(device==="Serienschalter"){s+=`<circle cx="${x}" cy="${y}" r="10"/><line x1="${x-7}" y1="${y-7}" x2="${x-18}" y2="${y-24}"/><line x1="${x+7}" y1="${y-7}" x2="${x+18}" y2="${y-24}"/><line x1="${x}" y1="${y+10}" x2="${x}" y2="${y+30}"/>`}else if(device==="Schalter"){s+=`<line x1="${x-20}" y1="${y+14}" x2="${x}" y2="${y}"/><line x1="${x}" y1="${y}" x2="${x+20}" y2="${y-20}"/>`}else if(device==="Lampe"){s+=`<circle cx="${x}" cy="${y}" r="15"/><line x1="${x-10}" y1="${y-10}" x2="${x+10}" y2="${y+10}"/><line x1="${x+10}" y1="${y-10}" x2="${x-10}" y2="${y+10}"/>`}else if(device==="Netzwerkdose"){s+=`<rect x="${x-14}" y="${y-14}" width="28" height="28"/><path d="M${x-7} ${y-2} h14 v10 h-14 z"/>`}s+=`</g>`;return s}
 function devicesToDraw(d){let arr=[];if(socketCount(d)===1)arr.push("Steckdose");if(socketCount(d)>=2)arr.push("Steckdose 2");["Wechselschalter","Kreuzschalter","Serienschalter","Schalter","Lampe","Netzwerkdose"].forEach(x=>{if(has(d,x))arr.push(x)});return arr}
-function renderPlan(){let p=current(),svg=planSvg,ds=p.doses.filter(d=>d.room===activeRoom);planRoomTitle.textContent=activeRoom;let xs=[170,380,590,800,1010],topY=255,baseY=445;let content=`<rect x="25" y="25" width="1250" height="680" fill="white" stroke="#111"/><text x="55" y="82" font-size="18">L</text><line x1="100" y1="78" x2="1235" y2="78" stroke="#111"/><text x="55" y="112" font-size="18">N</text><line x1="100" y1="108" x2="1235" y2="108" stroke="#111"/><text x="55" y="142" font-size="18">PE</text><line x1="100" y1="138" x2="1235" y2="138" stroke="#111" stroke-dasharray="12 8"/><rect x="55" y="175" width="90" height="90" fill="white" stroke="#111" stroke-dasharray="9 6"/><text x="75" y="205" fill="green" font-size="16" font-weight="700">F1</text><text x="75" y="228" fill="#f0c" font-size="16">${esc(p.breakerType||"C")}${esc(p.breakerAmp||"16")}</text><text x="155" y="210" font-size="14">Sicherung</text><text x="155" y="230" font-size="14">${esc(p.breakerType||"C")}${esc(p.breakerAmp||"16")} A</text><line x1="100" y1="78" x2="100" y2="175" stroke="#111"/><line x1="100" y1="265" x2="100" y2="${baseY}" stroke="#111"/><rect x="25" y="640" width="1250" height="45" fill="white" stroke="#111"/><text x="45" y="660" font-size="13">Projekt: ${esc(p.name)}</text><text x="320" y="660" font-size="13">Raum: ${esc(activeRoom)}</text><text x="560" y="660" font-size="13">Plan: Stromlaufplan</text><text x="850" y="660" font-size="13">Seite: 1 / 1</text>`;
-ds.forEach((d,i)=>{let x=xs[i]||1120;let devs=devicesToDraw(d);content+=`<text x="${x-35}" y="${topY-25}" fill="#06f" font-size="16" font-weight="700">${esc(d.name)}</text>`;devs.forEach((dev,j)=>{let y=topY+j*55;content+=compSymbol(dev,x,y)+`<text x="${x-55}" y="${y+30}" fill="#f0c" font-size="12">${esc(dev.replace("Steckdose 2","Doppel-Steckdose"))}</text>`});content+=`<line x1="${x}" y1="78" x2="${x}" y2="${topY-35}" stroke="#111"/><circle cx="${x}" cy="78" r="4" fill="#111"/>`;if(i>0){let px=xs[i-1]||170;let w=connectionWires(i);let y=baseY;content+=`<line x1="${px}" y1="${y}" x2="${x}" y2="${y}" stroke="#111" stroke-width="2"/><text x="${(px+x)/2-35}" y="${y-10}" font-size="13">${eCount(w)} Adern</text><text x="${(px+x)/2-45}" y="${y+22}" font-size="12">${esc(suggest(w))}</text>`}else{let w=connectionWires(0);content+=`<line x1="100" y1="${baseY}" x2="${x}" y2="${baseY}" stroke="#111" stroke-width="2"/><text x="115" y="${baseY-10}" font-size="13">${eCount(w)} Adern</text><text x="115" y="${baseY+22}" font-size="12">${esc(suggest(w))}</text>`}});
-let lamp=ds.find(d=>has(d,"Lampe"));if(!lamp&&ds.some(d=>has(d,"Wechselschalter"))){content+=`<circle cx="950" cy="220" r="18" fill="white" stroke="#111" stroke-width="2"/><line x1="938" y1="208" x2="962" y2="232" stroke="#111"/><line x1="962" y1="208" x2="938" y2="232" stroke="#111"/><text x="985" y="224" fill="green" font-size="14">Leuchte</text><line x1="950" y1="108" x2="950" y2="202" stroke="#111"/><circle cx="950" cy="108" r="4" fill="#111"/>`}svg.innerHTML=content}
+function planDeviceText(d){
+ let parts=[];
+ let sc=socketCount(d);
+ if(sc===1)parts.push("1× Steckdose");
+ if(sc>=2)parts.push("2× Steckdose");
+ ["Wechselschalter","Kreuzschalter","Serienschalter","Schalter","Lampe","Netzwerkdose"].forEach(x=>{if(has(d,x))parts.push(x)});
+ return parts.join(" · ");
+}
+function renderPlan(){
+ let p=current(), svg=planSvg, ds=p.doses.filter(d=>d.room===activeRoom);
+ planRoomTitle.textContent=activeRoom;
+ let c=calc();
+ let content=`<rect x="25" y="25" width="1250" height="680" fill="white" stroke="#111"/>
+ <text x="55" y="70" font-size="20" font-weight="700">ElektroPlan - ${esc(activeRoom)}</text>
+ <text x="55" y="100" font-size="14">Projekt: ${esc(p.name)}</text>
+ <text x="55" y="125" font-size="14">Darstellung: Verteiler → Dosen im Strang, mit Adernanzahl je Verbindung</text>
+ <rect x="55" y="180" width="105" height="70" fill="#fff" stroke="#111"/>
+ <text x="78" y="207" font-size="16" font-weight="700">F1</text>
+ <text x="75" y="230" font-size="16">C16A</text>
+ <text x="75" y="275" font-size="16" font-weight="700">Verteiler</text>`;
+ let x0=110,y=380,gap=210;
+ ds.forEach((d,i)=>{
+   let x=x0+(i+1)*gap;
+   let w=c[i]||[];
+   let fromX=i===0?x0+50:x0+i*gap;
+   let toX=x-65;
+   content+=`<line x1="${fromX}" y1="${y}" x2="${toX}" y2="${y}" stroke="#111" stroke-width="3"/>
+   <text x="${(fromX+toX)/2-35}" y="${y-14}" font-size="14" font-weight="700">${eCount(w)} Adern${w.some(a=>a.includes("Netzwerk"))?" + LAN":""}</text>
+   <text x="${(fromX+toX)/2-55}" y="${y+24}" font-size="12">${esc(suggest(w))}</text>
+   <rect x="${x-65}" y="${y-70}" width="130" height="140" rx="12" fill="#fff" stroke="#111"/>
+   <text x="${x-45}" y="${y-45}" fill="#06f" font-size="18" font-weight="700">${esc(d.name)}</text>
+   <text x="${x-50}" y="${y-20}" font-size="13">${esc(d.room)}</text>`;
+   let devs=devicesToDraw(d);
+   devs.forEach((dev,j)=>{
+      let yy=y+5+j*22;
+      content+=`<text x="${x-50}" y="${yy}" font-size="13">${esc(dev.replace("Steckdose 2","Doppel-Steckdose"))}</text>`;
+   });
+   content+=`<text x="${x-50}" y="${y+58}" font-size="12" fill="#667085">${esc(planDeviceText(d))}</text>`;
+ });
+ content+=`<rect x="25" y="640" width="1250" height="45" fill="white" stroke="#111"/>
+ <text x="45" y="666" font-size="13">Projekt: ${esc(p.name)}</text>
+ <text x="320" y="666" font-size="13">Raum: ${esc(activeRoom)}</text>
+ <text x="560" y="666" font-size="13">Plan: Verbindungsplan / Adernplan</text>
+ <text x="910" y="666" font-size="13">Seite: 1 / 1</text>`;
+ svg.innerHTML=content;
+}
 function renderSelectorsOnly(){let p=current();projectSelect.innerHTML=db.projects.map(pr=>`<option value="${pr.id}" ${pr.id===currentId?"selected":""}>${esc(pr.name)}</option>`).join("");projectList.innerHTML=db.projects.map(pr=>`<div class="navItem ${pr.id===currentId?"active":""}" onclick="openProject('${pr.id}')"><span>📁 ${esc(pr.name)}</span><span class="badge">${pr.doses.length}</span></div>`).join("")}
-function renderAll(){let p=current();if(!p)return;cleanRooms(p);renderSelectorsOnly();breakerType.value=p.breakerType||"C";breakerAmp.value=p.breakerAmp||"16";roomList.innerHTML=p.rooms.map(r=>`<div class="navItem ${r===activeRoom?"active":""}" onclick="activeRoom='${esc(r)}';store()"><span>▱ ${esc(r)}</span><span class="badge">${p.doses.filter(d=>d.room===r).length}</span></div>`).join("");projectName.value=p.name;roomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");doseRoomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");if(editIndex===null)doseRoomChanged();saveInfo.innerHTML=`Geöffnet: <b>${esc(p.name)}</b> · Raum: <b>${esc(activeRoom)}</b> · Sicherung: <b>${esc(p.breakerType)}${esc(p.breakerAmp)} A</b>`;let ds=p.doses;sideDoseList.innerHTML=ds.filter(d=>d.room===activeRoom).map(d=>`<div class="navItem"><span>▣ ${esc(d.name)}<br><small>${esc(d.devices.join(", "))}</small></span></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";doseList.innerHTML=ds.map((d,i)=>`<div class="item"><div class="row"><div><div class="name">${i+1}. ▣ ${esc(d.name)}</div><div class="muted">${esc(d.room)} · ${esc(d.type)}</div>${d.devices.map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div><div style="width:95px"><button onclick="move(${i},-1)">↑</button><button onclick="move(${i},1)">↓</button><button class="secondary" onclick="editDose(${i})">Ändern</button><button class="danger" onclick="deleteDose(${i})">Löschen</button></div></div></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";let c=calc();calcList.innerHTML=c.map((w,i)=>`<div class="item"><div class="name">${esc(ds[i].name)}</div><div class="muted">${esc(ds[i].room)} · ${esc(ds[i].devices.join(", "))}</div>${w.map(wireHTML).join("")}<b>${eCount(w)} Adern</b>${w.some(x=>x.includes("Netzwerk"))?"<br><b>+ 1 Netzwerkkabel</b>":""}<div class="muted">Vorschlag: ${suggest(w)}</div></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";renderPlan();renderTables(c);renderMaterial(c);footerStats.textContent=`Dosen im Projekt: ${ds.length} · Adern gesamt: ${c.reduce((a,w)=>a+eCount(w),0)}`}
+function renderAll(){let p=current();if(!p)return;cleanRooms(p);renderSelectorsOnly();roomList.innerHTML=p.rooms.map(r=>`<div class="navItem ${r===activeRoom?"active":""}" onclick="activeRoom='${esc(r)}';store()"><span>▱ ${esc(r)}</span><span class="badge">${p.doses.filter(d=>d.room===r).length}</span></div>`).join("");projectName.value=p.name;roomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");doseRoomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");if(editIndex===null)doseRoomChanged();saveInfo.innerHTML=`Geöffnet: <b>${esc(p.name)}</b> · Raum: <b>${esc(activeRoom)}</b> · Sicherung: <b>F1 C16A</b>`;let ds=p.doses;sideDoseList.innerHTML=ds.filter(d=>d.room===activeRoom).map(d=>`<div class="navItem"><span>▣ ${esc(d.name)}<br><small>${esc(d.devices.join(", "))}</small></span></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";doseList.innerHTML=ds.map((d,i)=>`<div class="item"><div class="row"><div><div class="name">${i+1}. ▣ ${esc(d.name)}</div><div class="muted">${esc(d.room)} · ${esc(d.type)}</div>${d.devices.map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div><div style="width:95px"><button onclick="move(${i},-1)">↑</button><button onclick="move(${i},1)">↓</button><button class="secondary" onclick="editDose(${i})">Ändern</button><button class="danger" onclick="deleteDose(${i})">Löschen</button></div></div></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";let c=calc();calcList.innerHTML=c.map((w,i)=>`<div class="item"><div class="name">${esc(ds[i].name)}</div><div class="muted">${esc(ds[i].room)} · ${esc(ds[i].devices.join(", "))}</div>${w.map(wireHTML).join("")}<b>${eCount(w)} Adern</b>${w.some(x=>x.includes("Netzwerk"))?"<br><b>+ 1 Netzwerkkabel</b>":""}<div class="muted">Vorschlag: ${suggest(w)}</div></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";renderPlan();renderTables(c);renderMaterial(c);footerStats.textContent=`Dosen im Projekt: ${ds.length} · Adern gesamt: ${c.reduce((a,w)=>a+eCount(w),0)}`}
 function renderTables(c){let p=current();strandTable.innerHTML=`<table><tr><th>Von</th><th>Nach</th><th>Adern</th><th>Typ</th></tr>${c.map((w,i)=>`<tr><td>${i===0?"Verteiler":esc(p.doses[i-1].name)}</td><td>${esc(p.doses[i].name)}</td><td>${eCount(w)}${w.some(x=>x.includes("Netzwerk"))?" + LAN":""}</td><td>${suggest(w)}</td></tr>`).join("")}</table>`;let w=c[0]||[];wireTable.innerHTML=`<table><tr><th>Ader</th><th>Funktion</th><th>Farbe</th></tr>${w.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x)}</td><td>${wireColor(x)}</td></tr>`).join("")}</table>`}
 function renderMaterial(c){let p=current(),counts={};p.doses.forEach(d=>d.devices.forEach(g=>counts[g]=(counts[g]||0)+1));materialList.innerHTML=`<h3>Geräte</h3>${Object.entries(counts).map(([k,v])=>`<div>${v} × ${esc(k)}</div>`).join("")}<h3>Adern pro Dose</h3><table><tr><th>Dose</th><th>Raum</th><th>Adern</th><th>Vorschlag</th></tr>${c.map((w,i)=>`<tr><td>${esc(p.doses[i].name)}</td><td>${esc(p.doses[i].room)}</td><td>${eCount(w)}${w.some(x=>x.includes("Netzwerk"))?" + LAN":""}</td><td>${suggest(w)}</td></tr>`).join("")}</table>`}
 function loadExample(render=true){let p=current();p.name="EFH Maier";p.breakerType="C";p.breakerAmp="16";p.doses=[{room:"Wohnzimmer",name:"WZ01",type:"3-fach Dose",devices:["Steckdose","Steckdose 2","Wechselschalter"]},{room:"Wohnzimmer",name:"WZ02",type:"2-fach Dose",devices:["Kreuzschalter","Steckdose"]},{room:"Wohnzimmer",name:"WZ03",type:"2-fach Dose",devices:["Wechselschalter","Steckdose","Netzwerkdose"]}];if(render)store()}
