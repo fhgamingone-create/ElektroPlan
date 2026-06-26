@@ -3,33 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ElektroPlan V4</title>
+<title>ElektroPlan V4.1</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f3f5f8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#111827}.app{max-width:900px;margin:auto;padding:16px 14px 92px}h1{margin:12px 0 4px;font-size:30px}.sub{color:#667085;font-size:14px;margin-bottom:14px}.card{background:#fff;border-radius:22px;padding:16px;margin:14px 0;box-shadow:0 8px 24px rgba(16,24,40,.10)}label{display:block;font-weight:800;margin:12px 0 7px}input,select,button{width:100%;font-size:16px;padding:13px;border-radius:15px;border:1px solid #cfd4dc;background:#fff}button{border:0;background:#007aff;color:white;font-weight:900;margin-top:10px}.secondary{background:#e8edf3;color:#101828}.danger{background:#ef4444}.green{background:#16a34a}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:560px){.grid{grid-template-columns:1fr}}.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(243,245,248,.96);border-top:1px solid #e5e7eb;backdrop-filter:blur(10px)}.tabsInner{max-width:900px;margin:auto;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px}.tabs button{margin:0;font-size:12px;padding:10px 2px;background:#e8edf3;color:#101828}.tabs .active{background:#007aff;color:#fff}.hidden{display:none!important}.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:560px){.checks{grid-template-columns:1fr}}.check{display:flex;align-items:center;gap:9px;background:#f8fafc;border:1px solid #e5e7eb;padding:11px;border-radius:15px;font-weight:800}.check input{width:auto}.item{background:#fbfcfe;border:1px solid #e5e7eb;border-radius:18px;padding:13px;margin:10px 0}.row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.name{font-weight:900;font-size:18px}.meta{color:#667085;font-size:13px;margin-top:4px}.pill{display:inline-block;background:#eaf4ff;color:#075985;border-radius:999px;padding:5px 10px;margin:5px 4px 0 0;font-size:13px;font-weight:800}.wire{display:flex;align-items:center;gap:10px;margin:8px 0}.dot{width:23px;height:23px;border-radius:50%;border:1px solid #333}.brown{background:#7b3f00}.blue{background:#0074d9}.black{background:#111}.grey{background:#999}.orange{background:#f59e0b}.yellowgreen{background:linear-gradient(90deg,green 50%,yellow 50%)}.purple{background:#7e22ce}.notice{background:#fff7ed;color:#9a3412;border-radius:16px;padding:12px;font-size:13px;line-height:1.4}.ok{background:#ecfdf3;color:#166534;border-radius:16px;padding:12px;font-size:13px;line-height:1.4}table{width:100%;border-collapse:collapse;font-size:14px}td,th{border-bottom:1px solid #e5e7eb;padding:8px;text-align:left;vertical-align:top}
 </style>
 </head>
 <body>
 <div class="app">
-<h1>⚡ ElektroPlan V4</h1>
-<div class="sub">Projektverwaltung · Räume · Stränge · Netzwerkdose · automatische Speicherung</div>
+<h1>⚡ ElektroPlan V4.1</h1>
+<div class="sub">Projektverwaltung · Raum-Dropdown · automatische Dosennamen · Netzwerkdose</div>
 
 <section id="tabProjects">
-  <div class="card">
-    <h2>📁 Meine Projekte</h2>
-    <div id="projectList"></div>
-  </div>
-  <div class="card">
-    <h2>➕ Neues Projekt</h2>
-    <label>Projektname</label><input id="newProjectName" placeholder="z. B. EFH Maier">
-    <button onclick="createProject()">Projekt anlegen</button>
-  </div>
+  <div class="card"><h2>📁 Meine Projekte</h2><div id="projectList"></div></div>
+  <div class="card"><h2>➕ Neues Projekt</h2><label>Projektname</label><input id="newProjectName" placeholder="z. B. EFH Maier"><button onclick="createProject()">Projekt anlegen</button></div>
 </section>
 
 <section id="tabProject" class="hidden">
   <div class="card">
     <h2>🏠 Aktuelles Projekt</h2>
     <label>Projektname</label><input id="projectName">
-    <label>Raum</label><input id="roomName" value="Wohnzimmer">
+    <label>Standard-Raum wählen</label>
+    <select id="roomSelect" onchange="roomChanged()"></select>
+    <label>Oder eigenen Raum eingeben</label>
+    <input id="customRoom" placeholder="z. B. Büro, Kinderzimmer..." oninput="customRoomChanged()">
     <button onclick="saveProject()">Projekt speichern</button>
     <button class="secondary" onclick="loadExample()">Beispiel laden</button>
     <div id="status" class="ok" style="margin-top:12px"></div>
@@ -39,7 +35,20 @@
 <section id="tabDoses" class="hidden">
   <div class="card">
     <h2>📦 Dose im Strang hinzufügen</h2>
-    <div class="grid"><div><label>Name</label><input id="doseName" placeholder="z. B. WZ-01"></div><div><label>Dosenart</label><select id="doseType"><option>1-fach Dose</option><option>2-fach Dose</option><option>3-fach Dose</option><option>Lampenauslass</option><option>Netzwerkdose</option></select></div></div>
+    <div class="grid">
+      <div>
+        <label>Raum für diese Dose</label>
+        <select id="doseRoomSelect" onchange="doseRoomChanged()"></select>
+      </div>
+      <div>
+        <label>Dosenvorschlag</label>
+        <select id="doseNameSelect" onchange="doseName.value=this.value"></select>
+      </div>
+    </div>
+    <label>Dosenname ändern</label>
+    <input id="doseName" placeholder="z. B. WZ01">
+    <label>Dosenart</label>
+    <select id="doseType"><option>1-fach Dose</option><option>2-fach Dose</option><option>3-fach Dose</option><option>Lampenauslass</option><option>Netzwerkdose</option></select>
     <label>Geräte in dieser Dose</label>
     <div class="checks">
       <label class="check"><input type="checkbox" value="Steckdose">Steckdose</label>
@@ -62,18 +71,13 @@
 </section>
 
 <section id="tabCalc" class="hidden">
-  <div class="card">
-    <h2>🧮 Berechnung</h2>
-    <button class="green" onclick="renderCalc()">Neu berechnen</button>
-    <div id="calcList"></div>
-  </div>
-  <div class="notice">V4-Logik: Der geschaltete Draht von der letzten Wechselschalter-Dose wird automatisch über alle vorherigen Dosen zurück bis zum Verteiler mitgerechnet. Netzwerkdosen werden als eigenes Netzwerkkabel gezählt.</div>
+  <div class="card"><h2>🧮 Berechnung</h2><button class="green" onclick="renderCalc()">Neu berechnen</button><div id="calcList"></div></div>
+  <div class="notice">V4.1-Logik: Der geschaltete Draht von der letzten Wechselschalter-Dose wird automatisch über alle vorherigen Dosen zurück bis zum Verteiler mitgerechnet. Netzwerkdosen werden als eigenes Netzwerkkabel gezählt.</div>
 </section>
 
 <section id="tabExport" class="hidden">
   <div class="card">
-    <h2>📋 Material / Sicherung</h2>
-    <div id="materialList"></div>
+    <h2>📋 Material / Sicherung</h2><div id="materialList"></div>
     <button class="green" onclick="exportProject()">Aktuelles Projekt exportieren</button>
     <button class="secondary" onclick="document.getElementById('importFile').click()">Projekt importieren</button>
     <input id="importFile" class="hidden" type="file" accept=".json" onchange="importProject(event)">
@@ -91,28 +95,45 @@
 </div></div>
 
 <script>
-const KEY="elektroplan_v4_projects";
-let db=loadDB();
-let currentId=db.currentId||null;
-let editIndex=null;
+const KEY="elektroplan_v41_projects";
+const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC"];
+const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC"};
+let db=loadDB(); let currentId=db.currentId||null; let editIndex=null;
 
 function uid(){return"p"+Date.now()+"_"+Math.floor(Math.random()*9999)}
-function freshProject(name){return{id:uid(),name:name||"Neues Projekt",room:"Wohnzimmer",doses:[]}}
+function freshProject(name){return{id:uid(),name:name||"Neues Projekt",room:"Wohnzimmer",customRooms:[],doses:[]}}
 function loadDB(){try{return JSON.parse(localStorage.getItem(KEY))||{currentId:null,projects:[]}}catch{return{currentId:null,projects:[]}}}
 function storeDB(){db.currentId=currentId;localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
 function current(){return db.projects.find(p=>p.id===currentId)||null}
 function ensureProject(){if(!current()){let p=freshProject("Testprojekt");db.projects.push(p);currentId=p.id;storeDB()}}
 
+function allRooms(p){return Array.from(new Set([...DEFAULT_ROOMS,...(p?.customRooms||[])]))}
+function codeForRoom(room){return ROOM_CODES[room] || room.trim().substring(0,2).toUpperCase()}
+function nextDoseName(room){
+ let p=current(); if(!p)return codeForRoom(room)+"01";
+ let code=codeForRoom(room);
+ let max=0;
+ p.doses.forEach(d=>{
+   if(d.room===room && d.name && d.name.startsWith(code)){
+     let n=parseInt(d.name.replace(code,""),10);
+     if(!isNaN(n)&&n>max)max=n;
+   }
+ });
+ return code+String(max+1).padStart(2,"0");
+}
 function show(tab){["Projects","Project","Doses","Calc","Export"].forEach(t=>{document.getElementById("tab"+t).classList.add("hidden");document.getElementById("b"+t).classList.remove("active")});document.getElementById("tab"+tab).classList.remove("hidden");document.getElementById("b"+tab).classList.add("active");window.scrollTo(0,0)}
 function createProject(){let name=newProjectName.value.trim()||"Neues Projekt";let p=freshProject(name);db.projects.push(p);currentId=p.id;newProjectName.value="";storeDB();show("Project")}
 function openProject(id){currentId=id;storeDB();show("Project")}
-function saveProject(){let p=current();if(!p)return;p.name=projectName.value.trim()||"Ohne Namen";p.room=roomName.value.trim()||"Wohnzimmer";storeDB()}
+function roomChanged(){let p=current();if(!p)return;p.room=roomSelect.value;customRoom.value="";storeDB()}
+function customRoomChanged(){let p=current();if(!p)return;let r=customRoom.value.trim();if(r){p.room=r;if(!p.customRooms.includes(r))p.customRooms.push(r);storeDB()}}
+function saveProject(){let p=current();if(!p)return;p.name=projectName.value.trim()||"Ohne Namen";let r=customRoom.value.trim()||roomSelect.value||"Wohnzimmer";p.room=r;if(!DEFAULT_ROOMS.includes(r)&&!p.customRooms.includes(r))p.customRooms.push(r);storeDB()}
 function deleteCurrentProject(){let p=current();if(!p)return;if(!confirm("Aktuelles Projekt löschen?"))return;db.projects=db.projects.filter(x=>x.id!==p.id);currentId=db.projects[0]?.id||null;storeDB();show("Projects")}
 
+function doseRoomChanged(){let room=doseRoomSelect.value;let name=nextDoseName(room);doseNameSelect.innerHTML=`<option>${name}</option>`;doseName.value=name}
 function selected(){return Array.from(document.querySelectorAll(".checks input:checked")).map(x=>x.value)}
-function saveDose(){let p=current();if(!p)return alert("Bitte Projekt wählen.");let d={name:doseName.value.trim()||"D-"+String(p.doses.length+1).padStart(2,"0"),type:doseType.value,devices:selected()};if(!d.devices.length)return alert("Bitte mindestens ein Gerät auswählen.");if(editIndex===null)p.doses.push(d);else{p.doses[editIndex]=d;editIndex=null}resetForm();storeDB()}
-function resetForm(){editIndex=null;doseName.value="";doseType.value="1-fach Dose";document.querySelectorAll(".checks input").forEach(x=>x.checked=false)}
-function editDose(i){let p=current();let d=p.doses[i];editIndex=i;doseName.value=d.name;doseType.value=d.type;document.querySelectorAll(".checks input").forEach(x=>x.checked=d.devices.includes(x.value));show("Doses")}
+function saveDose(){let p=current();if(!p)return alert("Bitte Projekt wählen.");let room=doseRoomSelect.value||p.room;let d={room:room,name:doseName.value.trim()||nextDoseName(room),type:doseType.value,devices:selected()};if(!d.devices.length)return alert("Bitte mindestens ein Gerät auswählen.");if(editIndex===null)p.doses.push(d);else{p.doses[editIndex]=d;editIndex=null}resetForm();storeDB()}
+function resetForm(){editIndex=null;doseType.value="1-fach Dose";document.querySelectorAll(".checks input").forEach(x=>x.checked=false);doseRoomChanged()}
+function editDose(i){let p=current();let d=p.doses[i];editIndex=i;doseRoomSelect.value=d.room;doseNameSelect.innerHTML=`<option>${d.name}</option>`;doseName.value=d.name;doseType.value=d.type;document.querySelectorAll(".checks input").forEach(x=>x.checked=d.devices.includes(x.value));show("Doses")}
 function deleteDose(i){let p=current();if(!confirm("Dose löschen?"))return;p.doses.splice(i,1);storeDB()}
 function move(i,dir){let p=current();let j=i+dir;if(j<0||j>=p.doses.length)return;[p.doses[i],p.doses[j]]=[p.doses[j],p.doses[i]];storeDB()}
 function has(d,x){return d.devices.includes(x)}
@@ -156,31 +177,34 @@ function suggestion(wires){
 function renderAll(){
  let p=current();
  projectList.innerHTML=db.projects.length?db.projects.map(pr=>`<div class="item"><div class="row"><div><div class="name">📁 ${pr.name}</div><div class="meta">${pr.room} · ${pr.doses.length} Dosen</div></div><button style="width:110px" onclick="openProject('${pr.id}')">Öffnen</button></div></div>`).join(""):`<div class="meta">Noch keine Projekte angelegt.</div>`;
- if(!p){projectName.value="";roomName.value="Wohnzimmer";status.innerHTML="Kein Projekt geöffnet.";doseList.innerHTML="";calcList.innerHTML="";materialList.innerHTML="";return}
- projectName.value=p.name||"";roomName.value=p.room||"Wohnzimmer";status.innerHTML=`Geöffnet: <b>${p.name}</b><br>Raum: ${p.room} · Dosen im Strang: ${p.doses.length}<br>Speichert automatisch im Browser.`;
- doseList.innerHTML=p.doses.length?p.doses.map((d,i)=>`<div class="item"><div class="row"><div><div class="name">${i+1}. 📦 ${d.name}</div><div class="meta">${d.type}</div><div>${d.devices.map(x=>`<span class="pill">${x}</span>`).join("")}</div></div><div style="width:90px"><button onclick="move(${i},-1)">↑</button><button onclick="move(${i},1)">↓</button><button class="secondary" onclick="editDose(${i})">Ändern</button><button class="danger" onclick="deleteDose(${i})">Löschen</button></div></div></div>`).join(""):`<div class="meta">Noch keine Dosen angelegt.</div>`;
+ if(!p){projectName.value="";status.innerHTML="Kein Projekt geöffnet.";doseList.innerHTML="";calcList.innerHTML="";materialList.innerHTML="";return}
+ projectName.value=p.name||"";roomSelect.innerHTML=allRooms(p).map(r=>`<option ${r===p.room?"selected":""}>${r}</option>`).join("");customRoom.value=DEFAULT_ROOMS.includes(p.room)?"":p.room;
+ doseRoomSelect.innerHTML=allRooms(p).map(r=>`<option ${r===p.room?"selected":""}>${r}</option>`).join("");
+ status.innerHTML=`Geöffnet: <b>${p.name}</b><br>Raum: ${p.room} · Dosen im Strang: ${p.doses.length}<br>Speichert automatisch im Browser.`;
+ if(editIndex===null)doseRoomChanged();
+ doseList.innerHTML=p.doses.length?p.doses.map((d,i)=>`<div class="item"><div class="row"><div><div class="name">${i+1}. 📦 ${d.name}</div><div class="meta">${d.room} · ${d.type}</div><div>${d.devices.map(x=>`<span class="pill">${x}</span>`).join("")}</div></div><div style="width:90px"><button onclick="move(${i},-1)">↑</button><button onclick="move(${i},1)">↓</button><button class="secondary" onclick="editDose(${i})">Ändern</button><button class="danger" onclick="deleteDose(${i})">Löschen</button></div></div></div>`).join(""):`<div class="meta">Noch keine Dosen angelegt.</div>`;
  renderCalc(); renderMaterial();
 }
 function renderCalc(){
  let p=current(); let r=calc();
- calcList.innerHTML=p&&r.length?r.map((w,i)=>`<div class="item"><div class="name">${i+1}. ${p.doses[i].name}</div><div class="meta">${p.doses[i].devices.join(", ")}</div><div>${w.map(wireHTML).join("")}</div><b>${w.filter(x=>!x.includes("Netzwerkkabel")).length} Adern</b>${w.some(x=>x.includes("Netzwerkkabel"))?`<br><b>+ 1 Netzwerkkabel</b>`:""}<div class="meta">Vorschlag: ${suggestion(w)}</div></div>`).join(""):`<div class="meta">Noch keine Dosen.</div>`;
+ calcList.innerHTML=p&&r.length?r.map((w,i)=>`<div class="item"><div class="name">${i+1}. ${p.doses[i].name}</div><div class="meta">${p.doses[i].room} · ${p.doses[i].devices.join(", ")}</div><div>${w.map(wireHTML).join("")}</div><b>${w.filter(x=>!x.includes("Netzwerkkabel")).length} Adern</b>${w.some(x=>x.includes("Netzwerkkabel"))?`<br><b>+ 1 Netzwerkkabel</b>`:""}<div class="meta">Vorschlag: ${suggestion(w)}</div></div>`).join(""):`<div class="meta">Noch keine Dosen.</div>`;
 }
 function renderMaterial(){
  let p=current(); if(!p){materialList.innerHTML="";return}
  let r=calc(), total={}, net=0;
  p.doses.forEach(d=>d.devices.forEach(g=>{total[g]=(total[g]||0)+1;if(g==="Netzwerkdose")net++}));
- materialList.innerHTML=p.doses.length?`<h3>Geräte</h3>${Object.entries(total).map(([k,v])=>`<div>${v} × ${k}</div>`).join("")}<h3>Leitungen</h3>${net?`<div>${net} × Netzwerkkabel zur Netzwerkdose</div>`:""}<h3>Adern pro Dose</h3><table><tr><th>Dose</th><th>Adern</th><th>Vorschlag</th></tr>${r.map((w,i)=>`<tr><td>${p.doses[i].name}</td><td>${w.filter(x=>!x.includes("Netzwerkkabel")).length}${w.some(x=>x.includes("Netzwerkkabel"))?" + LAN":""}</td><td>${suggestion(w)}</td></tr>`).join("")}</table>`:`<div class="meta">Noch keine Daten.</div>`;
+ materialList.innerHTML=p.doses.length?`<h3>Geräte</h3>${Object.entries(total).map(([k,v])=>`<div>${v} × ${k}</div>`).join("")}<h3>Leitungen</h3>${net?`<div>${net} × Netzwerkkabel zur Netzwerkdose</div>`:""}<h3>Adern pro Dose</h3><table><tr><th>Dose</th><th>Raum</th><th>Adern</th><th>Vorschlag</th></tr>${r.map((w,i)=>`<tr><td>${p.doses[i].name}</td><td>${p.doses[i].room}</td><td>${w.filter(x=>!x.includes("Netzwerkkabel")).length}${w.some(x=>x.includes("Netzwerkkabel"))?" + LAN":""}</td><td>${suggestion(w)}</td></tr>`).join("")}</table>`:`<div class="meta">Noch keine Daten.</div>`;
 }
 function loadExample(){
  let p=current(); if(!p){p=freshProject("Test Wechselschaltung");db.projects.push(p);currentId=p.id}
  p.name="Test Wechselschaltung";p.room="Wohnzimmer";p.doses=[
- {name:"WZ-01",type:"3-fach Dose",devices:["Steckdose","Steckdose 2","Wechselschalter"]},
- {name:"WZ-02",type:"2-fach Dose",devices:["Kreuzschalter","Steckdose"]},
- {name:"WZ-03",type:"2-fach Dose",devices:["Wechselschalter","Steckdose","Netzwerkdose"]}
+ {room:"Wohnzimmer",name:"WZ01",type:"3-fach Dose",devices:["Steckdose","Steckdose 2","Wechselschalter"]},
+ {room:"Wohnzimmer",name:"WZ02",type:"2-fach Dose",devices:["Kreuzschalter","Steckdose"]},
+ {room:"Wohnzimmer",name:"WZ03",type:"2-fach Dose",devices:["Wechselschalter","Steckdose","Netzwerkdose"]}
  ];storeDB()
 }
 function exportProject(){let p=current();if(!p)return;const blob=new Blob([JSON.stringify(p,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(p.name||"elektroplan")+".json";a.click();URL.revokeObjectURL(a.href)}
-function importProject(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{let p=JSON.parse(r.result);p.id=uid();db.projects.push(p);currentId=p.id;storeDB();alert("Import fertig")}catch{alert("Import fehlgeschlagen")}};r.readAsText(f)}
+function importProject(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{let p=JSON.parse(r.result);p.id=uid();if(!p.customRooms)p.customRooms=[];db.projects.push(p);currentId=p.id;storeDB();alert("Import fertig")}catch{alert("Import fehlgeschlagen")}};r.readAsText(f)}
 ensureProject();renderAll();show("Projects");
 </script>
 </body></html>
