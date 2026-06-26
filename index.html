@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ElektroPlan V6.4</title>
+<title>ElektroPlan V6.5</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -49,7 +49,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V6.4</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V6.5</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -112,12 +112,18 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
         </div>
         <div>
           <label>Neuer Schlauch im aktiven Raum</label>
+          <select id="newHoseFxp">
+            <option value="16">FXP 16</option>
+            <option value="20" selected>FXP 20</option>
+            <option value="25">FXP 25</option>
+            <option value="32">FXP 32</option>
+          </select>
           <button class="secondary" onclick="createHose()">Schlauch hinzufügen</button>
         </div>
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">V6.4: Räume können mehrere getrennte Schläuche haben. Jeder Schlauch wird getrennt berechnet. FXP 16/20/25/32 auswählbar.</div>
+      <div class="notice" style="margin-top:12px">V6.5: Räume können mehrere getrennte Schläuche haben. FXP 16/20/25/32 ist bei jedem Schlauch sauber auswählbar.</div>
     </div>
   </section>
 
@@ -131,6 +137,12 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
         </div>
         <div>
           <label>Neuer Schlauch</label>
+          <select id="newHoseFxp2">
+            <option value="16">FXP 16</option>
+            <option value="20" selected>FXP 20</option>
+            <option value="25">FXP 25</option>
+            <option value="32">FXP 32</option>
+          </select>
           <button onclick="createHose()">+ Schlauch hinzufügen</button>
         </div>
       </div>
@@ -233,7 +245,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v64";
+const KEY="elektroplan_v65";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 const FXP_SIZES=["16","20","25","32"];
@@ -293,7 +305,15 @@ function createHoseForProject(p,room,render=true){
   if(render)store();
   return h;
 }
-function createHose(){let p=current();if(!p)return;let h=createHoseForProject(p,activeRoom,false);activeHoseId=h.id;store()}
+function createHose(){
+  let p=current();if(!p)return;
+  let h=createHoseForProject(p,activeRoom,false);
+  const s1=document.getElementById("newHoseFxp");
+  const s2=document.getElementById("newHoseFxp2");
+  h.fxp=(s2&&s2.value)||(s1&&s1.value)||"20";
+  activeHoseId=h.id;
+  store()
+}
 function updateHose(id,field,val){let p=current(),h=p.hoses.find(x=>x.id===id);if(!h)return;h[field]=val;store()}
 function deleteHose(id){
   let p=current(),h=p.hoses.find(x=>x.id===id);if(!h)return;
@@ -428,21 +448,31 @@ function renderAll(){
 }
 function renderHoses(p){
   const room=activeRoom;
-  hoseList.innerHTML=hosesInRoom(p,room).map(h=>`
+  const hoses=hosesInRoom(p,room);
+  hoseList.innerHTML=hoses.length ? hoses.map(h=>`
     <div class="item">
       <div class="row">
-        <div>
+        <div style="flex:1">
           <div class="name">${esc(h.name)}</div>
           <div class="muted">${esc(h.room)} · FXP ${esc(h.fxp)} · ${dosesInHose(p,h.id).length} Dosen</div>
-          <label>Name</label><input value="${esc(h.name)}" onchange="updateHose('${h.id}','name',this.value)">
+
+          <label>Name</label>
+          <input value="${esc(h.name)}" onchange="updateHose('${h.id}','name',this.value)">
+
           <label>FXP-Größe</label>
           <select onchange="updateHose('${h.id}','fxp',this.value)">
-            ${FXP_SIZES.map(s=>`<option ${s===h.fxp?"selected":""}>${s}</option>`).join("")}
+            <option value="16" ${h.fxp==="16"?"selected":""}>FXP 16</option>
+            <option value="20" ${h.fxp==="20"?"selected":""}>FXP 20</option>
+            <option value="25" ${h.fxp==="25"?"selected":""}>FXP 25</option>
+            <option value="32" ${h.fxp==="32"?"selected":""}>FXP 32</option>
           </select>
         </div>
-        <div style="width:120px"><button class="danger" onclick="deleteHose('${h.id}')">Löschen</button></div>
+        <div style="width:120px">
+          <button class="secondary" onclick="hoseChanged('${h.id}')">Aktiv</button>
+          <button class="danger" onclick="deleteHose('${h.id}')">Löschen</button>
+        </div>
       </div>
-    </div>`).join("") || "<div class='muted'>Noch kein Schlauch.</div>";
+    </div>`).join("") : "<div class='muted'>Noch kein Schlauch.</div>";
 }
 function renderDoses(p){
   sideDoseList.innerHTML=dosesInHose(p,activeHoseId).map(d=>`<div class="navItem"><span>▣ ${esc(d.name)}<br><small>${esc(d.devices.join(", "))}</small></span></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";
