@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ElektroPlan V6.3</title>
+<title>ElektroPlan V6.4</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+.app{display:grid;grid-template-columns:290px 1fr;min-height:100vh}
 .sidebar{background:#fff;border-right:1px solid #e5e7eb;padding:14px}
 .main{padding:14px 18px 90px}
 h1{font-size:25px;margin:4px 0 18px}.ver{font-size:13px;background:#eef2f7;border-radius:999px;padding:4px 8px;margin-left:6px}
@@ -41,7 +41,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 .ok{background:#ecfdf3;color:#166534;border-radius:12px;padding:11px;font-size:13px}
 .wire{display:flex;align-items:center;gap:8px;margin:6px 0}
 .dot{width:18px;height:18px;border-radius:50%;border:1px solid #333}.brown{background:#7b3f00}.blue{background:#0074d9}.black{background:#111}.grey{background:#999}.orange{background:#f59e0b}.yellowgreen{background:linear-gradient(90deg,green 50%,yellow 50%)}.purple{background:#7e22ce}
-.footer{position:fixed;left:280px;right:0;bottom:0;background:#fff;border-top:1px solid #e5e7eb;padding:9px 18px;display:flex;gap:28px;font-size:13px}
+.footer{position:fixed;left:290px;right:0;bottom:0;background:#fff;border-top:1px solid #e5e7eb;padding:9px 18px;display:flex;gap:28px;font-size:13px}
 @media(max-width:760px){.app{display:block}.sidebar{border-right:0;border-bottom:1px solid #e5e7eb}.topbar{margin:0 -18px 14px}.tableGrid,.grid{grid-template-columns:1fr}.footer{left:0;overflow:auto}.checks{grid-template-columns:1fr}}
 @media print{.sidebar,.topbar,.tabs,.footer,.noPrint{display:none!important}.app{display:block}.main{padding:0}.card{box-shadow:none;border:0}}
 </style>
@@ -49,7 +49,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V6.3</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V6.4</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -57,13 +57,16 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
   <div class="sectionTitle">Räume</div>
   <div id="roomList"></div>
 
-  <div class="sectionTitle">Dosen im Raum</div>
+  <div class="sectionTitle">Schläuche im Raum</div>
+  <div id="sideHoseList"></div>
+
+  <div class="sectionTitle">Dosen im Schlauch</div>
   <div id="sideDoseList"></div>
 
   <div class="sectionTitle">Hinweis</div>
   <div class="muted">
-    Leitungen werden jetzt als <b>Einzeldrähte im Schlauch</b> berechnet.<br><br>
-    NYM-Leitungsvorschläge sind entfernt.
+    Jede Dose gehört jetzt zu einem <b>Schlauch</b>.<br><br>
+    Berechnet wird schlauchweise mit <b>Einzeldrähten im FXP</b>.
   </div>
 </aside>
 
@@ -78,6 +81,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 
   <div class="tabs">
     <button id="bOverview" onclick="show('Overview')">Übersicht</button>
+    <button id="bHoses" onclick="show('Hoses')">Schläuche</button>
     <button id="bDoses" onclick="show('Doses')">Dosen</button>
     <button id="bCalc" onclick="show('Calc')">Berechnung</button>
     <button id="bMaterial" onclick="show('Material')">Material</button>
@@ -95,14 +99,42 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
           <select id="roomSelect" onchange="roomChanged()"></select>
         </div>
         <div>
+          <label>Aktiver Schlauch</label>
+          <select id="hoseSelectTop" onchange="hoseChanged(this.value)"></select>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
           <label>Neuer Raum</label>
           <input id="newRoom" placeholder="z. B. Büro">
           <button class="secondary" onclick="addRoom()">Raum hinzufügen</button>
         </div>
+        <div>
+          <label>Neuer Schlauch im aktiven Raum</label>
+          <button class="secondary" onclick="createHose()">Schlauch hinzufügen</button>
+        </div>
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">Plan-Zeichnung entfernt. Fokus: Dosen, Adern, Einzeldrähte, Material und Export.</div>
+      <div class="notice" style="margin-top:12px">V6.4: Räume können mehrere getrennte Schläuche haben. Jeder Schlauch wird getrennt berechnet. FXP 16/20/25/32 auswählbar.</div>
+    </div>
+  </section>
+
+  <section id="tabHoses" class="hidden">
+    <div class="card">
+      <h2>Schläuche im Raum</h2>
+      <div class="grid">
+        <div>
+          <label>Raum</label>
+          <select id="hoseRoomSelect" onchange="activeRoom=this.value;renderAll()"></select>
+        </div>
+        <div>
+          <label>Neuer Schlauch</label>
+          <button onclick="createHose()">+ Schlauch hinzufügen</button>
+        </div>
+      </div>
+      <div id="hoseList"></div>
     </div>
   </section>
 
@@ -116,15 +148,15 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
           <select id="doseRoomSelect" onchange="doseRoomChanged()"></select>
         </div>
         <div>
-          <label>Dosenvorschlag</label>
-          <select id="doseNameSelect" onchange="doseName.value=this.value"></select>
+          <label>Schlauch</label>
+          <select id="doseHoseSelect" onchange="doseHoseChanged()"></select>
         </div>
       </div>
 
       <div class="grid">
         <div>
-          <label>Dosenname</label>
-          <input id="doseName">
+          <label>Dosenvorschlag</label>
+          <select id="doseNameSelect" onchange="doseName.value=this.value"></select>
         </div>
         <div>
           <label>Dosenart</label>
@@ -137,6 +169,9 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
           </select>
         </div>
       </div>
+
+      <label>Dosenname</label>
+      <input id="doseName">
 
       <label>Geräte</label>
       <div class="checks">
@@ -162,7 +197,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 
   <section id="tabCalc" class="hidden">
     <div class="card">
-      <h2>Adernberechnung</h2>
+      <h2>Adernberechnung je Schlauch</h2>
       <div id="calcList"></div>
     </div>
     <div class="tableGrid">
@@ -198,55 +233,139 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v63";
+const KEY="elektroplan_v64";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
-let db=loadDB(), currentId=db.currentId||null, activeRoom="Wohnzimmer", editIndex=null;
+const FXP_SIZES=["16","20","25","32"];
+let db=loadDB(), currentId=db.currentId||null, activeRoom="Wohnzimmer", activeHoseId=null, editIndex=null;
 
 function uid(){return"p"+Date.now()+"_"+Math.floor(Math.random()*9999)}
-function freshProject(name){return{id:uid(),name:name||"Neues Projekt",rooms:[...DEFAULT_ROOMS],doses:[]}}
+function hid(){return"h"+Date.now()+"_"+Math.floor(Math.random()*9999)}
+function freshProject(name){
+  const p={id:uid(),name:name||"Neues Projekt",rooms:[...DEFAULT_ROOMS],hoses:[],doses:[]};
+  p.hoses.push({id:hid(),room:"Wohnzimmer",name:"Schlauch 1",fxp:"20"});
+  return p;
+}
+function loadDB(){try{return JSON.parse(localStorage.getItem(KEY))||{currentId:null,projects:[]}}catch{return{currentId:null,projects:[]}}}
+function current(){return db.projects.find(p=>p.id===currentId)}
 function cleanRooms(p){
   const bad=/^(s|sc|sch|schö|schöa|schöaf|schl|schla|schlaf|schlafz|schlafzi|schlafzim|schlafzimm|schlafzimme)$/i;
   p.rooms=[...new Set([...(p.rooms||[]),...DEFAULT_ROOMS])].filter(r=>r && !bad.test(r));
 }
-function loadDB(){try{return JSON.parse(localStorage.getItem(KEY))||{currentId:null,projects:[]}}catch{return{currentId:null,projects:[]}}}
+function migrate(p){
+  cleanRooms(p);
+  if(!p.hoses)p.hoses=[];
+  if(!p.hoses.length){
+    p.rooms.forEach(r=>p.hoses.push({id:hid(),room:r,name:"Schlauch 1",fxp:"20"}));
+  }
+  p.doses.forEach(d=>{
+    if(!d.hoseId){
+      let h=p.hoses.find(x=>x.room===d.room) || createHoseForProject(p,d.room,false);
+      d.hoseId=h.id;
+    }
+  });
+}
 function store(){db.currentId=currentId;localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
-function current(){return db.projects.find(p=>p.id===currentId)}
-function ensure(){if(!db.projects.length){let p=freshProject("EFH Maier");db.projects.push(p);currentId=p.id;loadExample(false)}else if(!currentId)currentId=db.projects[0].id;db.projects.forEach(cleanRooms)}
-function createProject(){let p=freshProject("Neues Projekt");db.projects.push(p);currentId=p.id;activeRoom="Wohnzimmer";store();show("Overview")}
-function openProject(id){currentId=id;activeRoom=current().rooms[0]||"Wohnzimmer";store()}
+function ensure(){
+  if(!db.projects.length){
+    let p=freshProject("EFH Maier");
+    db.projects.push(p);currentId=p.id;loadExample(false);
+  } else if(!currentId) currentId=db.projects[0].id;
+  db.projects.forEach(migrate);
+  const p=current();
+  if(p && !activeHoseId){
+    let h=hosesInRoom(p,activeRoom)[0] || p.hoses[0];
+    if(h){activeRoom=h.room;activeHoseId=h.id}
+  }
+}
+function createProject(){let p=freshProject("Neues Projekt");db.projects.push(p);currentId=p.id;activeRoom="Wohnzimmer";activeHoseId=p.hoses[0].id;store();show("Overview")}
+function openProject(id){currentId=id;let p=current();migrate(p);activeRoom=p.rooms[0]||"Wohnzimmer";activeHoseId=(hosesInRoom(p,activeRoom)[0]||p.hoses[0])?.id||null;store()}
 function renameProject(){let p=current();if(!p)return;p.name=projectName.value||"Ohne Namen";localStorage.setItem(KEY,JSON.stringify(db));renderSelectorsOnly()}
-function deleteCurrentProject(){let p=current();if(!p)return;if(!confirm("Projekt löschen?"))return;db.projects=db.projects.filter(x=>x.id!==p.id);currentId=db.projects[0]?.id||null;store();show("Overview")}
-function addRoom(){let p=current(),r=newRoom.value.trim();if(!p||!r)return;if(!p.rooms.includes(r))p.rooms.push(r);activeRoom=r;newRoom.value="";store()}
-function roomChanged(){activeRoom=roomSelect.value;store()}
-function doseRoomChanged(){let r=doseRoomSelect.value;doseNameSelect.innerHTML=`<option>${nextDoseName(r)}</option>`;doseName.value=nextDoseName(r)}
+function deleteCurrentProject(){let p=current();if(!p)return;if(!confirm("Projekt löschen?"))return;db.projects=db.projects.filter(x=>x.id!==p.id);currentId=db.projects[0]?.id||null;activeHoseId=null;store();show("Overview")}
+function addRoom(){let p=current(),r=newRoom.value.trim();if(!p||!r)return;if(!p.rooms.includes(r))p.rooms.push(r);let h=createHoseForProject(p,r,false);activeRoom=r;activeHoseId=h.id;newRoom.value="";store()}
+function roomChanged(){let p=current();activeRoom=roomSelect.value;let h=hosesInRoom(p,activeRoom)[0]||createHoseForProject(p,activeRoom,false);activeHoseId=h.id;store()}
+function hoseChanged(id){activeHoseId=id;let p=current();let h=p.hoses.find(x=>x.id===id);if(h)activeRoom=h.room;store()}
+function hosesInRoom(p,room){return p.hoses.filter(h=>h.room===room)}
+function createHoseForProject(p,room,render=true){
+  const nr=hosesInRoom(p,room).length+1;
+  const h={id:hid(),room,name:"Schlauch "+nr,fxp:"20"};
+  p.hoses.push(h);
+  if(render)store();
+  return h;
+}
+function createHose(){let p=current();if(!p)return;let h=createHoseForProject(p,activeRoom,false);activeHoseId=h.id;store()}
+function updateHose(id,field,val){let p=current(),h=p.hoses.find(x=>x.id===id);if(!h)return;h[field]=val;store()}
+function deleteHose(id){
+  let p=current(),h=p.hoses.find(x=>x.id===id);if(!h)return;
+  if(p.doses.some(d=>d.hoseId===id)) return alert("Dieser Schlauch enthält Dosen. Bitte zuerst Dosen löschen oder verschieben.");
+  if(!confirm("Schlauch löschen?"))return;
+  p.hoses=p.hoses.filter(x=>x.id!==id);
+  activeHoseId=(hosesInRoom(p,activeRoom)[0]||p.hoses[0])?.id||null;
+  store();
+}
+function doseRoomChanged(){
+  let p=current(),room=doseRoomSelect.value;
+  activeRoom=room;
+  let hs=hosesInRoom(p,room);
+  if(!hs.length)hs=[createHoseForProject(p,room,false)];
+  doseHoseSelect.innerHTML=hs.map(h=>`<option value="${h.id}" ${h.id===activeHoseId?"selected":""}>${esc(h.name)} · FXP ${esc(h.fxp)}</option>`).join("");
+  if(!hs.some(h=>h.id===activeHoseId))activeHoseId=hs[0].id;
+  doseHoseSelect.value=activeHoseId;
+  doseHoseChanged();
+}
+function doseHoseChanged(){
+  activeHoseId=doseHoseSelect.value;
+  let room=doseRoomSelect.value;
+  let name=nextDoseName(room);
+  doseNameSelect.innerHTML=`<option>${name}</option>`;
+  doseName.value=name;
+}
 function code(room){return ROOM_CODES[room]||room.substring(0,2).toUpperCase()}
-function nextDoseName(room){let p=current(),c=code(room),max=0;p.doses.forEach(d=>{if(d.room===room&&d.name.startsWith(c)){let n=parseInt(d.name.replace(c,""));if(!isNaN(n)&&n>max)max=n}});return c+String(max+1).padStart(2,"0")}
+function nextDoseName(room){
+  let p=current(),c=code(room),max=0;
+  p.doses.forEach(d=>{if(d.room===room&&d.name.startsWith(c)){let n=parseInt(d.name.replace(c,""));if(!isNaN(n)&&n>max)max=n}});
+  return c+String(max+1).padStart(2,"0")
+}
 function selected(){return Array.from(document.querySelectorAll(".checks input:checked")).map(x=>x.value)}
-function saveDose(){let p=current();if(!p)return;let room=doseRoomSelect.value;let d={room,name:doseName.value.trim()||nextDoseName(room),type:doseType.value,devices:selected()};if(!d.devices.length)return alert("Bitte Gerät auswählen.");if(editIndex===null)p.doses.push(d);else{p.doses[editIndex]=d;editIndex=null}resetDose();store()}
+function saveDose(){
+  let p=current();if(!p)return;
+  let room=doseRoomSelect.value;
+  let hoseId=doseHoseSelect.value;
+  let d={room,hoseId,name:doseName.value.trim()||nextDoseName(room),type:doseType.value,devices:selected()};
+  if(!d.devices.length)return alert("Bitte Gerät auswählen.");
+  if(editIndex===null)p.doses.push(d);else{p.doses[editIndex]=d;editIndex=null}
+  activeRoom=room;activeHoseId=hoseId;
+  resetDose();store()
+}
 function resetDose(){editIndex=null;doseType.value="1-fach Dose";document.querySelectorAll(".checks input").forEach(x=>x.checked=false);doseRoomChanged()}
-function editDose(i){let p=current(),d=p.doses[i];editIndex=i;doseRoomSelect.value=d.room;doseNameSelect.innerHTML=`<option>${d.name}</option>`;doseName.value=d.name;doseType.value=d.type;document.querySelectorAll(".checks input").forEach(x=>x.checked=d.devices.includes(x.value));show("Doses")}
+function editDose(i){
+  let p=current(),d=p.doses[i];editIndex=i;activeRoom=d.room;activeHoseId=d.hoseId;
+  renderAll();
+  doseRoomSelect.value=d.room;doseRoomChanged();doseHoseSelect.value=d.hoseId;
+  doseNameSelect.innerHTML=`<option>${d.name}</option>`;doseName.value=d.name;doseType.value=d.type;
+  document.querySelectorAll(".checks input").forEach(x=>x.checked=d.devices.includes(x.value));
+  show("Doses")
+}
 function deleteDose(i){let p=current();if(!confirm("Dose löschen?"))return;p.doses.splice(i,1);store()}
 function move(i,dir){let p=current(),j=i+dir;if(j<0||j>=p.doses.length)return;[p.doses[i],p.doses[j]]=[p.doses[j],p.doses[i]];store()}
 function has(d,x){return d.devices.includes(x)}
 function socketCount(d){return (has(d,"Steckdose")?1:0)+(has(d,"Steckdose 2")?1:0)}
 function hasSocket(d){return socketCount(d)>0}
 function hasNetwork(d){return has(d,"Netzwerkdose")||d.type==="Netzwerkdose"}
-
-function calc(){
-  let p=current();if(!p)return[];
-  let res=p.doses.map(()=>new Set());
+function dosesInHose(p,hoseId){return p.doses.filter(d=>d.hoseId===hoseId)}
+function calcForDoses(doses){
+  let res=doses.map(()=>new Set());
   let socketEnd=-1;
-  p.doses.forEach((d,i)=>{if(hasSocket(d))socketEnd=i});
+  doses.forEach((d,i)=>{if(hasSocket(d))socketEnd=i});
   for(let i=0;i<=socketEnd;i++){res[i].add("L Steckdose");res[i].add("N Steckdose");res[i].add("PE")}
-  p.doses.forEach((d,i)=>{
+  doses.forEach((d,i)=>{
     if(has(d,"Schalter")){res[i].add("L Licht");res[i].add("L geschaltet zurück")}
     if(has(d,"Serienschalter")){res[i].add("L Licht");res[i].add("L1 geschaltet zurück");res[i].add("L2 geschaltet zurück")}
     if(has(d,"Lampe")){res[i].add("L geschaltet");res[i].add("N Licht");res[i].add("PE")}
     if(hasNetwork(d))res[i].add("Netzwerkkabel Cat / Datenleitung")
   });
-  let ws=p.doses.map((d,i)=>has(d,"Wechselschalter")?i:null).filter(x=>x!==null);
-  let ks=p.doses.map((d,i)=>has(d,"Kreuzschalter")?i:null).filter(x=>x!==null);
+  let ws=doses.map((d,i)=>has(d,"Wechselschalter")?i:null).filter(x=>x!==null);
+  let ks=doses.map((d,i)=>has(d,"Kreuzschalter")?i:null).filter(x=>x!==null);
   if(ws.length>=2){
     let first=ws[0],last=ws[ws.length-1];
     for(let i=first;i<=last;i++){
@@ -259,15 +378,24 @@ function calc(){
   }
   return res.map(s=>Array.from(s))
 }
+function calcAll(){
+  let p=current(),out=[];
+  p.hoses.forEach(h=>{
+    const ds=dosesInHose(p,h.id);
+    const c=calcForDoses(ds);
+    out.push({hose:h,doses:ds,calc:c});
+  });
+  return out;
+}
 function eCount(w){return w.filter(x=>!x.includes("Netzwerk")).length}
-function suggest(w){
+function suggest(w,hose){
   let n=eCount(w),net=w.some(x=>x.includes("Netzwerk"));
-  let base=n===0?"keine 230V-Adern":`${n} Einzeldrähte 1,5 mm² im Schlauch`;
+  let base=n===0?"keine 230V-Adern":`${n} Einzeldrähte 1,5 mm² im FXP ${hose?.fxp||"20"}`;
   return net?base+" + 1× Netzwerkkabel":base;
 }
-function show(tab){["Overview","Doses","Calc","Material"].forEach(t=>{document.getElementById("tab"+t).classList.add("hidden");document.getElementById("b"+t).classList.remove("active")});document.getElementById("tab"+tab).classList.remove("hidden");document.getElementById("b"+tab).classList.add("active");renderAll()}
 function wireColor(w){if(w==="PE")return"yellowgreen";if(w.includes("N "))return"blue";if(w.includes("Steckdose"))return"brown";if(w.includes("K2"))return"grey";if(w.includes("K1"))return"black";if(w.includes("geschaltet"))return"black";if(w.includes("L Licht"))return"black";if(w.includes("Netzwerk"))return"purple";return"orange"}
 function wireHTML(w){return `<div class="wire"><span class="dot ${wireColor(w)}"></span>${esc(w)}</div>`}
+function show(tab){["Overview","Hoses","Doses","Calc","Material"].forEach(t=>{document.getElementById("tab"+t).classList.add("hidden");document.getElementById("b"+t).classList.remove("active")});document.getElementById("tab"+tab).classList.remove("hidden");document.getElementById("b"+tab).classList.add("active");renderAll()}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
 
 function renderSelectorsOnly(){
@@ -276,48 +404,113 @@ function renderSelectorsOnly(){
   projectList.innerHTML=db.projects.map(pr=>`<div class="navItem ${pr.id===currentId?"active":""}" onclick="openProject('${pr.id}')"><span>📁 ${esc(pr.name)}</span><span class="badge">${pr.doses.length}</span></div>`).join("");
 }
 function renderAll(){
-  let p=current();if(!p)return;cleanRooms(p);renderSelectorsOnly();
-  roomList.innerHTML=p.rooms.map(r=>`<div class="navItem ${r===activeRoom?"active":""}" onclick="activeRoom='${esc(r)}';store()"><span>▱ ${esc(r)}</span><span class="badge">${p.doses.filter(d=>d.room===r).length}</span></div>`).join("");
+  let p=current();if(!p)return;migrate(p);renderSelectorsOnly();
+  if(!activeRoom || !p.rooms.includes(activeRoom))activeRoom=p.rooms[0]||"Wohnzimmer";
+  let hs=hosesInRoom(p,activeRoom);
+  if(!hs.length){let h=createHoseForProject(p,activeRoom,false);hs=[h];activeHoseId=h.id}
+  if(!activeHoseId || !hs.some(h=>h.id===activeHoseId))activeHoseId=hs[0].id;
+
+  roomList.innerHTML=p.rooms.map(r=>`<div class="navItem ${r===activeRoom?"active":""}" onclick="activeRoom='${esc(r)}';activeHoseId=null;store()"><span>▱ ${esc(r)}</span><span class="badge">${p.doses.filter(d=>d.room===r).length}</span></div>`).join("");
+  sideHoseList.innerHTML=hs.map(h=>`<div class="navItem ${h.id===activeHoseId?"active":""}" onclick="hoseChanged('${h.id}')"><span>${esc(h.name)}<br><small>FXP ${esc(h.fxp)}</small></span><span class="badge">${dosesInHose(p,h.id).length}</span></div>`).join("");
   projectName.value=p.name;
   roomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
+  hoseSelectTop.innerHTML=hs.map(h=>`<option value="${h.id}" ${h.id===activeHoseId?"selected":""}>${esc(h.name)} · FXP ${esc(h.fxp)}</option>`).join("");
+  hoseRoomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
   doseRoomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
   if(editIndex===null)doseRoomChanged();
-  saveInfo.innerHTML=`Geöffnet: <b>${esc(p.name)}</b> · Raum: <b>${esc(activeRoom)}</b> · automatisch gespeichert`;
-  let ds=p.doses,c=calc();
+  saveInfo.innerHTML=`Geöffnet: <b>${esc(p.name)}</b> · Raum: <b>${esc(activeRoom)}</b> · Schlauch: <b>${esc((p.hoses.find(h=>h.id===activeHoseId)||{}).name||"")}</b> · automatisch gespeichert`;
 
-  sideDoseList.innerHTML=ds.filter(d=>d.room===activeRoom).map(d=>`<div class="navItem"><span>▣ ${esc(d.name)}<br><small>${esc(d.devices.join(", "))}</small></span></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";
-
-  doseList.innerHTML=ds.map((d,i)=>`<div class="item"><div class="row"><div><div class="name">${i+1}. ▣ ${esc(d.name)}</div><div class="muted">${esc(d.room)} · ${esc(d.type)}</div>${d.devices.map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div><div style="width:95px"><button onclick="move(${i},-1)">↑</button><button onclick="move(${i},1)">↓</button><button class="secondary" onclick="editDose(${i})">Ändern</button><button class="danger" onclick="deleteDose(${i})">Löschen</button></div></div></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";
-
-  calcList.innerHTML=c.map((w,i)=>`<div class="item"><div class="name">${esc(ds[i].name)}</div><div class="muted">${esc(ds[i].room)} · ${esc(ds[i].devices.join(", "))}</div>${w.map(wireHTML).join("")}<b>${eCount(w)} Einzeldrähte</b>${w.some(x=>x.includes("Netzwerk"))?"<br><b>+ 1 Netzwerkkabel</b>":""}<div class="muted">Vorschlag: ${suggest(w)}</div></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";
-
-  renderTables(c);
-  renderMaterial(c);
-  footerStats.textContent=`Dosen im Projekt: ${ds.length} · Einzeldrähte gesamt: ${c.reduce((a,w)=>a+eCount(w),0)}`;
+  renderHoses(p);
+  renderDoses(p);
+  renderCalc();
+  renderMaterial();
+  footerStats.textContent=`Dosen: ${p.doses.length} · Schläuche: ${p.hoses.length}`;
 }
-function renderTables(c){
-  let p=current();
-  strandTable.innerHTML=`<table><tr><th>Von</th><th>Nach</th><th>Adern</th><th>Vorschlag</th></tr>${c.map((w,i)=>`<tr><td>${i===0?"Verteiler":esc(p.doses[i-1].name)}</td><td>${esc(p.doses[i].name)}</td><td>${eCount(w)}${w.some(x=>x.includes("Netzwerk"))?" + LAN":""}</td><td>${suggest(w)}</td></tr>`).join("")}</table>`;
-  let w=c[0]||[];
-  wireTable.innerHTML=`<table><tr><th>Ader</th><th>Funktion</th><th>Farbe</th></tr>${w.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x)}</td><td>${wireColor(x)}</td></tr>`).join("")}</table>`;
+function renderHoses(p){
+  const room=activeRoom;
+  hoseList.innerHTML=hosesInRoom(p,room).map(h=>`
+    <div class="item">
+      <div class="row">
+        <div>
+          <div class="name">${esc(h.name)}</div>
+          <div class="muted">${esc(h.room)} · FXP ${esc(h.fxp)} · ${dosesInHose(p,h.id).length} Dosen</div>
+          <label>Name</label><input value="${esc(h.name)}" onchange="updateHose('${h.id}','name',this.value)">
+          <label>FXP-Größe</label>
+          <select onchange="updateHose('${h.id}','fxp',this.value)">
+            ${FXP_SIZES.map(s=>`<option ${s===h.fxp?"selected":""}>${s}</option>`).join("")}
+          </select>
+        </div>
+        <div style="width:120px"><button class="danger" onclick="deleteHose('${h.id}')">Löschen</button></div>
+      </div>
+    </div>`).join("") || "<div class='muted'>Noch kein Schlauch.</div>";
 }
-function renderMaterial(c){
-  let p=current(),counts={},totalWires=c.reduce((a,w)=>a+eCount(w),0),net=c.reduce((a,w)=>a+(w.some(x=>x.includes("Netzwerk"))?1:0),0);
+function renderDoses(p){
+  sideDoseList.innerHTML=dosesInHose(p,activeHoseId).map(d=>`<div class="navItem"><span>▣ ${esc(d.name)}<br><small>${esc(d.devices.join(", "))}</small></span></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";
+  doseList.innerHTML=p.hoses.filter(h=>h.room===activeRoom).map(h=>{
+    const ds=dosesInHose(p,h.id);
+    return `<h3>${esc(h.name)} · FXP ${esc(h.fxp)}</h3>` + (ds.map(d=>{
+      const i=p.doses.indexOf(d);
+      return `<div class="item"><div class="row"><div><div class="name">${i+1}. ▣ ${esc(d.name)}</div><div class="muted">${esc(d.room)} · ${esc(h.name)} · ${esc(d.type)}</div>${d.devices.map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div><div style="width:95px"><button onclick="move(${i},-1)">↑</button><button onclick="move(${i},1)">↓</button><button class="secondary" onclick="editDose(${i})">Ändern</button><button class="danger" onclick="deleteDose(${i})">Löschen</button></div></div></div>`;
+    }).join("") || "<div class='muted'>Keine Dosen in diesem Schlauch.</div>");
+  }).join("") || "<div class='muted'>Noch keine Dosen.</div>";
+}
+function renderCalc(){
+  const groups=calcAll();
+  calcList.innerHTML=groups.map(g=>{
+    if(!g.doses.length)return "";
+    return `<h3>${esc(g.hose.room)} · ${esc(g.hose.name)} · FXP ${esc(g.hose.fxp)}</h3>` + g.calc.map((w,i)=>`
+      <div class="item">
+        <div class="name">${esc(g.doses[i].name)}</div>
+        <div class="muted">${esc(g.doses[i].devices.join(", "))}</div>
+        ${w.map(wireHTML).join("")}
+        <b>${eCount(w)} Einzeldrähte</b>${w.some(x=>x.includes("Netzwerk"))?"<br><b>+ 1 Netzwerkkabel</b>":""}
+        <div class="muted">Vorschlag: ${suggest(w,g.hose)}</div>
+      </div>`).join("");
+  }).join("") || "<div class='muted'>Noch keine Dosen.</div>";
+  renderTables(groups);
+}
+function renderTables(groups){
+  let rows="", first=[];
+  groups.forEach(g=>{
+    g.calc.forEach((w,i)=>{
+      rows+=`<tr><td>${esc(g.hose.room)}</td><td>${esc(g.hose.name)}</td><td>${i===0?"Verteiler":esc(g.doses[i-1].name)}</td><td>${esc(g.doses[i].name)}</td><td>${eCount(w)}${w.some(x=>x.includes("Netzwerk"))?" + LAN":""}</td><td>${suggest(w,g.hose)}</td></tr>`;
+      if(!first.length)first=w;
+    });
+  });
+  strandTable.innerHTML=`<table><tr><th>Raum</th><th>Schlauch</th><th>Von</th><th>Nach</th><th>Adern</th><th>Vorschlag</th></tr>${rows}</table>`;
+  wireTable.innerHTML=`<table><tr><th>Ader</th><th>Funktion</th><th>Farbe</th></tr>${first.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x)}</td><td>${wireColor(x)}</td></tr>`).join("")}</table>`;
+}
+function renderMaterial(){
+  const p=current(),groups=calcAll();
+  let counts={},totalWires=0,net=0,fxp={};
   p.doses.forEach(d=>d.devices.forEach(g=>counts[g]=(counts[g]||0)+1));
-  materialList.innerHTML=`<h3>Geräte</h3>${Object.entries(counts).map(([k,v])=>`<div>${v} × ${esc(k)}</div>`).join("")||"<div class='muted'>Noch keine Geräte.</div>"}<h3>Einzeldrähte / Netzwerk</h3><div>${totalWires} × Einzeldraht 1,5 mm² laut Berechnung</div>${net?`<div>${net} × Netzwerkkabel</div>`:""}<h3>Adern pro Dose</h3><table><tr><th>Dose</th><th>Raum</th><th>Adern</th><th>Vorschlag</th></tr>${c.map((w,i)=>`<tr><td>${esc(p.doses[i].name)}</td><td>${esc(p.doses[i].room)}</td><td>${eCount(w)}${w.some(x=>x.includes("Netzwerk"))?" + LAN":""}</td><td>${suggest(w)}</td></tr>`).join("")}</table>`;
+  groups.forEach(g=>{
+    if(g.doses.length)fxp[g.hose.fxp]=(fxp[g.hose.fxp]||0)+1;
+    g.calc.forEach(w=>{totalWires+=eCount(w); if(w.some(x=>x.includes("Netzwerk")))net++});
+  });
+  materialList.innerHTML=`<h3>Geräte</h3>${Object.entries(counts).map(([k,v])=>`<div>${v} × ${esc(k)}</div>`).join("")||"<div class='muted'>Noch keine Geräte.</div>"}
+  <h3>FXP Schläuche</h3>${Object.entries(fxp).map(([k,v])=>`<div>${v} × FXP ${esc(k)}</div>`).join("")||"<div class='muted'>Noch keine belegten Schläuche.</div>"}
+  <h3>Einzeldrähte / Netzwerk</h3><div>${totalWires} × Einzeldraht 1,5 mm² laut Berechnung</div>${net?`<div>${net} × Netzwerkkabel</div>`:""}
+  <h3>Adern pro Verbindung</h3><div id="materialConnections">${strandTable.innerHTML}</div>`;
 }
 function loadExample(render=true){
   let p=current();
   p.name="EFH Maier";
+  p.hoses=[];
+  let h1={id:hid(),room:"Wohnzimmer",name:"Schlauch 1",fxp:"20"};
+  let h2={id:hid(),room:"Schlafzimmer",name:"Schlauch 1",fxp:"16"};
+  p.hoses.push(h1,h2);
   p.doses=[
-    {room:"Wohnzimmer",name:"WZ01",type:"3-fach Dose",devices:["Steckdose","Steckdose 2","Wechselschalter"]},
-    {room:"Wohnzimmer",name:"WZ02",type:"2-fach Dose",devices:["Kreuzschalter","Steckdose"]},
-    {room:"Wohnzimmer",name:"WZ03",type:"2-fach Dose",devices:["Wechselschalter","Steckdose","Netzwerkdose"]}
+    {room:"Wohnzimmer",hoseId:h1.id,name:"WZ01",type:"3-fach Dose",devices:["Steckdose","Steckdose 2","Wechselschalter"]},
+    {room:"Wohnzimmer",hoseId:h1.id,name:"WZ02",type:"2-fach Dose",devices:["Kreuzschalter","Steckdose"]},
+    {room:"Wohnzimmer",hoseId:h1.id,name:"WZ03",type:"2-fach Dose",devices:["Wechselschalter","Steckdose","Netzwerkdose"]},
+    {room:"Schlafzimmer",hoseId:h2.id,name:"SZ01",type:"1-fach Dose",devices:["Steckdose"]}
   ];
+  activeRoom="Wohnzimmer";activeHoseId=h1.id;
   if(render)store()
 }
 function exportProject(){let p=current();const blob=new Blob([JSON.stringify(p,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(p.name||"elektroplan")+".json";a.click();URL.revokeObjectURL(a.href)}
-function importProject(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let p=JSON.parse(r.result);p.id=uid();cleanRooms(p);db.projects.push(p);currentId=p.id;store()};r.readAsText(f)}
+function importProject(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let p=JSON.parse(r.result);p.id=uid();migrate(p);db.projects.push(p);currentId=p.id;store()};r.readAsText(f)}
 
 ensure();renderAll();show("Overview");
 </script>
