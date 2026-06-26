@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ElektroPlan V6.5</title>
+<title>ElektroPlan V6.6</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -49,7 +49,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V6.5</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V6.6</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -123,7 +123,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">V6.5: Räume können mehrere getrennte Schläuche haben. FXP 16/20/25/32 ist bei jedem Schlauch sauber auswählbar.</div>
+      <div class="notice" style="margin-top:12px">V6.6: Berechnung zeigt jetzt den Leitungsverlauf je Schlauch: Verteiler → Dose → Dose, mit Verbindung, FXP und Einzeldrähten.</div>
     </div>
   </section>
 
@@ -245,7 +245,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v65";
+const KEY="elektroplan_v66";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 const FXP_SIZES=["16","20","25","32"];
@@ -488,14 +488,35 @@ function renderCalc(){
   const groups=calcAll();
   calcList.innerHTML=groups.map(g=>{
     if(!g.doses.length)return "";
-    return `<h3>${esc(g.hose.room)} · ${esc(g.hose.name)} · FXP ${esc(g.hose.fxp)}</h3>` + g.calc.map((w,i)=>`
-      <div class="item">
-        <div class="name">${esc(g.doses[i].name)}</div>
-        <div class="muted">${esc(g.doses[i].devices.join(", "))}</div>
-        ${w.map(wireHTML).join("")}
-        <b>${eCount(w)} Einzeldrähte</b>${w.some(x=>x.includes("Netzwerk"))?"<br><b>+ 1 Netzwerkkabel</b>":""}
+    let connRows=g.calc.map((w,i)=>{
+      const from=i===0?"Verteiler":g.doses[i-1].name;
+      const to=g.doses[i].name;
+      return `<tr><td>${esc(from)}</td><td>→</td><td>${esc(to)}</td><td>${esc(g.hose.name)}</td><td>FXP ${esc(g.hose.fxp)}</td><td><b>${eCount(w)}</b>${w.some(x=>x.includes("Netzwerk"))?" + LAN":""}</td><td>${suggest(w,g.hose)}</td></tr>`;
+    }).join("");
+
+    let doseCards=g.doses.map((d,i)=>{
+      const w=g.calc[i]||[];
+      const from=i===0?"Verteiler":g.doses[i-1].name;
+      const to=i<g.doses.length-1?g.doses[i+1].name:"Enddose";
+      return `<div class="item">
+        <div class="name">${esc(d.name)}</div>
+        <div class="muted">${esc(d.room)} · ${esc(g.hose.name)} · FXP ${esc(g.hose.fxp)}</div>
+        <div style="margin-top:8px"><b>kommt von:</b> ${esc(from)}</div>
+        <div><b>geht zu:</b> ${esc(to)}</div>
+        <div style="margin-top:8px"><b>Verbindung ${esc(from)} → ${esc(d.name)}:</b> ${eCount(w)} Einzeldrähte${w.some(x=>x.includes("Netzwerk"))?" + 1 Netzwerkkabel":""}</div>
         <div class="muted">Vorschlag: ${suggest(w,g.hose)}</div>
-      </div>`).join("");
+        <div style="margin-top:8px">${w.map(wireHTML).join("")}</div>
+      </div>`;
+    }).join("");
+
+    return `<div class="card">
+      <h3>${esc(g.hose.room)} · ${esc(g.hose.name)} · FXP ${esc(g.hose.fxp)}</h3>
+      <div class="notice"><b>Leitungsverlauf:</b> Verteiler ${g.doses.map(d=>"→ "+esc(d.name)).join(" ")}</div>
+      <h4>Verbindungen in diesem Schlauch</h4>
+      <table><tr><th>Von</th><th></th><th>Nach</th><th>Schlauch</th><th>FXP</th><th>Adern</th><th>Vorschlag</th></tr>${connRows}</table>
+      <h4>Dosen im Schlauch</h4>
+      ${doseCards}
+    </div>`;
   }).join("") || "<div class='muted'>Noch keine Dosen.</div>";
   renderTables(groups);
 }
