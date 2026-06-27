@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ElektroPlan V7.0</title>
+<title>ElektroPlan V7.1</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -71,7 +71,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V7.0</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V7.1</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -96,7 +96,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
   <div class="topbar">
     <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select></div>
     <div style="display:flex;gap:8px">
-      <button class="secondary" onclick="exportProject()" style="width:auto">Export</button>
+      <button class="secondary" onclick="exportProject()" style="width:auto">Export</button><button class="secondary" onclick="document.getElementById('importFileTop').click()" style="width:auto">Import</button>
       <button onclick="window.print()" style="width:auto">PDF/Drucken</button>
     </div>
   </div>
@@ -149,7 +149,15 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">V7.0: Leiterquerschnitt 1,5 / 2,5 mm² pro Schlauch, Handy-Optimierung und Zoom deaktiviert.</div>
+      <div class="notice" style="margin-top:12px">V7.1: Startet ohne Beispieldosen. Import/Export/Löschen ist direkt sichtbar. Alte Testdaten können gelöscht werden.</div>
+      <div class="grid" style="margin-top:12px">
+        <button class="green" onclick="exportProject()">Projekt exportieren</button>
+        <button class="secondary" onclick="document.getElementById('importFileTop').click()">Projekt importieren</button>
+        <input id="importFileTop" class="hidden" type="file" accept=".json" onchange="importProject(event)">
+        <button class="secondary" onclick="clearProjectData()">Aktuelles Projekt leeren</button>
+        <button class="danger" onclick="deleteCurrentProject()">Aktuelles Projekt löschen</button>
+        <button class="danger" onclick="resetAllData()">Alle lokalen Daten löschen</button>
+      </div>
     </div>
   </section>
 
@@ -275,7 +283,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v70";
+const KEY="elektroplan_v71";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 const FXP_SIZES=["16","20","25","32"];
@@ -311,8 +319,9 @@ function migrate(p){
 function store(){db.currentId=currentId;localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
 function ensure(){
   if(!db.projects.length){
-    let p=freshProject("EFH Maier");
-    db.projects.push(p);currentId=p.id;loadExample(false);
+    let p=freshProject("Neues Projekt");
+    db.projects.push(p);
+    currentId=p.id;
   } else if(!currentId) currentId=db.projects[0].id;
   db.projects.forEach(migrate);
   const p=current();
@@ -324,7 +333,7 @@ function ensure(){
 function createProject(){let p=freshProject("Neues Projekt");db.projects.push(p);currentId=p.id;activeRoom="Wohnzimmer";activeHoseId=p.hoses[0].id;store();show("Overview")}
 function openProject(id){currentId=id;let p=current();migrate(p);activeRoom=p.rooms[0]||"Wohnzimmer";activeHoseId=(hosesInRoom(p,activeRoom)[0]||p.hoses[0])?.id||null;store()}
 function renameProject(){let p=current();if(!p)return;p.name=projectName.value||"Ohne Namen";localStorage.setItem(KEY,JSON.stringify(db));renderSelectorsOnly()}
-function deleteCurrentProject(){let p=current();if(!p)return;if(!confirm("Projekt löschen?"))return;db.projects=db.projects.filter(x=>x.id!==p.id);currentId=db.projects[0]?.id||null;activeHoseId=null;store();show("Overview")}
+function deleteCurrentProject(){let p=current();if(!p)return;if(!confirm("Projekt löschen?"))return;db.projects=db.projects.filter(x=>x.id!==p.id);currentId=db.projects[0]?.id||null;activeHoseId=null;if(!currentId){let np=freshProject("Neues Projekt");db.projects.push(np);currentId=np.id;activeRoom="Wohnzimmer";activeHoseId=np.hoses[0].id}store();show("Overview")}
 function addRoom(){let p=current(),r=newRoom.value.trim();if(!p||!r)return;if(!p.rooms.includes(r))p.rooms.push(r);let h=createHoseForProject(p,r,false);activeRoom=r;activeHoseId=h.id;newRoom.value="";store()}
 function roomChanged(){let p=current();activeRoom=roomSelect.value;let h=hosesInRoom(p,activeRoom)[0]||createHoseForProject(p,activeRoom,false);activeHoseId=h.id;store()}
 function hoseChanged(id){activeHoseId=id;let p=current();let h=p.hoses.find(x=>x.id===id);if(h)activeRoom=h.room;store()}
@@ -598,6 +607,23 @@ function loadExample(render=true){
   ];
   activeRoom="Wohnzimmer";activeHoseId=h1.id;
   if(render)store()
+}
+function clearProjectData(){
+  let p=current(); if(!p)return;
+  if(!confirm("Alle Dosen und Schläuche im aktuellen Projekt löschen?"))return;
+  p.doses=[];
+  p.hoses=[];
+  let h=createHoseForProject(p,activeRoom||"Wohnzimmer",false);
+  h.fxp="20"; h.cross="1,5";
+  activeHoseId=h.id;
+  store();
+}
+function resetAllData(){
+  if(!confirm("Wirklich alle lokalen ElektroPlan-Projekte in diesem Browser löschen?"))return;
+  localStorage.removeItem(KEY);
+  db={currentId:null,projects:[]};
+  currentId=null; activeRoom="Wohnzimmer"; activeHoseId=null; editIndex=null;
+  ensure(); store(); show("Overview");
 }
 function exportProject(){let p=current();const blob=new Blob([JSON.stringify(p,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(p.name||"elektroplan")+".json";a.click();URL.revokeObjectURL(a.href)}
 function importProject(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let p=JSON.parse(r.result);p.id=uid();migrate(p);db.projects.push(p);currentId=p.id;store()};r.readAsText(f)}
