@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ElektroPlan V7.1</title>
+<title>ElektroPlan V7.2</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -71,7 +71,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V7.1</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V7.2</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -94,7 +94,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 
 <main class="main">
   <div class="topbar">
-    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select></div>
+    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted" style="margin-left:8px">Version 7.2</span></div>
     <div style="display:flex;gap:8px">
       <button class="secondary" onclick="exportProject()" style="width:auto">Export</button><button class="secondary" onclick="document.getElementById('importFileTop').click()" style="width:auto">Import</button>
       <button onclick="window.print()" style="width:auto">PDF/Drucken</button>
@@ -103,7 +103,6 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 
   <div class="tabs">
     <button id="bOverview" onclick="show('Overview')">Übersicht</button>
-    <button id="bHoses" onclick="show('Hoses')">Schläuche</button>
     <button id="bDoses" onclick="show('Doses')">Dosen</button>
     <button id="bCalc" onclick="show('Calc')">Berechnung</button>
     <button id="bMaterial" onclick="show('Material')">Material</button>
@@ -122,7 +121,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
         </div>
         <div>
           <label>Aktiver Schlauch</label>
-          <select id="hoseSelectTop" onchange="hoseChanged(this.value)"></select>
+          <input id="activeHoseInfo" disabled>
         </div>
       </div>
 
@@ -133,23 +132,13 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
           <button class="secondary" onclick="addRoom()">Raum hinzufügen</button>
         </div>
         <div>
-          <label>Neuer Schlauch im aktiven Raum</label>
-          <select id="newHoseFxp">
-            <option value="16">FXP 16</option>
-            <option value="20" selected>FXP 20</option>
-            <option value="25">FXP 25</option>
-            <option value="32">FXP 32</option>
-          </select>
-          <select id="newHoseCross">
-            <option value="1,5" selected>1,5 mm²</option>
-            <option value="2,5">2,5 mm²</option>
-          </select>
-          <button class="secondary" onclick="createHose()">Schlauch hinzufügen</button>
+          <label>Schläuche</label>
+          <button class="secondary" onclick="show('Doses')">Schlauch/Dose verwalten</button>
         </div>
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">V7.1: Startet ohne Beispieldosen. Import/Export/Löschen ist direkt sichtbar. Alte Testdaten können gelöscht werden.</div>
+      <div class="notice" style="margin-top:12px">V7.2: Version sichtbar, Schlauch-Eingabe vereinfacht und doppelte Schlauch-Auswahl entfernt.</div>
       <div class="grid" style="margin-top:12px">
         <button class="green" onclick="exportProject()">Projekt exportieren</button>
         <button class="secondary" onclick="document.getElementById('importFileTop').click()">Projekt importieren</button>
@@ -158,33 +147,6 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
         <button class="danger" onclick="deleteCurrentProject()">Aktuelles Projekt löschen</button>
         <button class="danger" onclick="resetAllData()">Alle lokalen Daten löschen</button>
       </div>
-    </div>
-  </section>
-
-  <section id="tabHoses" class="hidden">
-    <div class="card">
-      <h2>Schläuche im Raum</h2>
-      <div class="grid">
-        <div>
-          <label>Raum</label>
-          <select id="hoseRoomSelect" onchange="activeRoom=this.value;renderAll()"></select>
-        </div>
-        <div>
-          <label>Neuer Schlauch</label>
-          <select id="newHoseFxp2">
-            <option value="16">FXP 16</option>
-            <option value="20" selected>FXP 20</option>
-            <option value="25">FXP 25</option>
-            <option value="32">FXP 32</option>
-          </select>
-          <select id="newHoseCross2">
-            <option value="1,5" selected>1,5 mm²</option>
-            <option value="2,5">2,5 mm²</option>
-          </select>
-          <button onclick="createHose()">+ Schlauch hinzufügen</button>
-        </div>
-      </div>
-      <div id="hoseList"></div>
     </div>
   </section>
 
@@ -200,6 +162,26 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
         <div>
           <label>Schlauch</label>
           <select id="doseHoseSelect" onchange="doseHoseChanged()"></select>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label>Neuer Schlauch</label>
+          <select id="newHoseFxp">
+            <option value="16">FXP 16</option>
+            <option value="20" selected>FXP 20</option>
+            <option value="25">FXP 25</option>
+            <option value="32">FXP 32</option>
+          </select>
+        </div>
+        <div>
+          <label>Querschnitt</label>
+          <select id="newHoseCross">
+            <option value="1,5" selected>1,5 mm²</option>
+            <option value="2,5">2,5 mm²</option>
+          </select>
+          <button class="secondary" onclick="createHose()">+ Schlauch hinzufügen</button>
         </div>
       </div>
 
@@ -283,7 +265,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v71";
+const KEY="elektroplan_v72";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 const FXP_SIZES=["16","20","25","32"];
@@ -349,11 +331,9 @@ function createHose(){
   let p=current();if(!p)return;
   let h=createHoseForProject(p,activeRoom,false);
   const s1=document.getElementById("newHoseFxp");
-  const s2=document.getElementById("newHoseFxp2");
   const c1=document.getElementById("newHoseCross");
-  const c2=document.getElementById("newHoseCross2");
-  h.fxp=(s2&&s2.value)||(s1&&s1.value)||"20";
-  h.cross=(c2&&c2.value)||(c1&&c1.value)||"1,5";
+  h.fxp=(s1&&s1.value)||"20";
+  h.cross=(c1&&c1.value)||"1,5";
   activeHoseId=h.id;
   store()
 }
@@ -458,7 +438,7 @@ function suggest(w,hose){
 }
 function wireColor(w){if(w==="PE")return"yellowgreen";if(w.includes("N "))return"blue";if(w.includes("Steckdose"))return"brown";if(w.includes("K2"))return"grey";if(w.includes("K1"))return"black";if(w.includes("geschaltet"))return"black";if(w.includes("L Licht"))return"black";if(w.includes("Netzwerk"))return"purple";return"orange"}
 function wireHTML(w){return `<div class="wire"><span class="dot ${wireColor(w)}"></span>${esc(w)}</div>`}
-function show(tab){["Overview","Hoses","Doses","Calc","Material"].forEach(t=>{document.getElementById("tab"+t).classList.add("hidden");document.getElementById("b"+t).classList.remove("active")});document.getElementById("tab"+tab).classList.remove("hidden");document.getElementById("b"+tab).classList.add("active");renderAll()}
+function show(tab){["Overview","Doses","Calc","Material"].forEach(t=>{document.getElementById("tab"+t).classList.add("hidden");document.getElementById("b"+t).classList.remove("active")});document.getElementById("tab"+tab).classList.remove("hidden");document.getElementById("b"+tab).classList.add("active");renderAll()}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
 
 function renderSelectorsOnly(){
@@ -477,13 +457,12 @@ function renderAll(){
   sideHoseList.innerHTML=hs.map(h=>`<div class="navItem ${h.id===activeHoseId?"active":""}" onclick="hoseChanged('${h.id}')"><span>${esc(h.name)}<br><small>FXP ${esc(h.fxp)} · ${esc(h.cross||"1,5")} mm²</small></span><span class="badge">${dosesInHose(p,h.id).length}</span></div>`).join("");
   projectName.value=p.name;
   roomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
-  hoseSelectTop.innerHTML=hs.map(h=>`<option value="${h.id}" ${h.id===activeHoseId?"selected":""}>${esc(h.name)} · FXP ${esc(h.fxp)} · ${esc(h.cross||"1,5")} mm²</option>`).join("");
-  hoseRoomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
+  activeHoseInfo.value=(p.hoses.find(h=>h.id===activeHoseId)?.name||"")+" · FXP "+(p.hoses.find(h=>h.id===activeHoseId)?.fxp||"20")+" · "+(p.hoses.find(h=>h.id===activeHoseId)?.cross||"1,5")+" mm²";
+  
   doseRoomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
   if(editIndex===null)doseRoomChanged();
   saveInfo.innerHTML=`Geöffnet: <b>${esc(p.name)}</b> · Raum: <b>${esc(activeRoom)}</b> · Schlauch: <b>${esc((p.hoses.find(h=>h.id===activeHoseId)||{}).name||"")}</b> · automatisch gespeichert`;
 
-  renderHoses(p);
   renderDoses(p);
   renderCalc();
   renderMaterial();
