@@ -2,8 +2,8 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ElektroPlan V6.6</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ElektroPlan V7.0</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -42,14 +42,36 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 .wire{display:flex;align-items:center;gap:8px;margin:6px 0}
 .dot{width:18px;height:18px;border-radius:50%;border:1px solid #333}.brown{background:#7b3f00}.blue{background:#0074d9}.black{background:#111}.grey{background:#999}.orange{background:#f59e0b}.yellowgreen{background:linear-gradient(90deg,green 50%,yellow 50%)}.purple{background:#7e22ce}
 .footer{position:fixed;left:290px;right:0;bottom:0;background:#fff;border-top:1px solid #e5e7eb;padding:9px 18px;display:flex;gap:28px;font-size:13px}
-@media(max-width:760px){.app{display:block}.sidebar{border-right:0;border-bottom:1px solid #e5e7eb}.topbar{margin:0 -18px 14px}.tableGrid,.grid{grid-template-columns:1fr}.footer{left:0;overflow:auto}.checks{grid-template-columns:1fr}}
-@media print{.sidebar,.topbar,.tabs,.footer,.noPrint{display:none!important}.app{display:block}.main{padding:0}.card{box-shadow:none;border:0}}
+@media(max-width:760px){
+  body{font-size:17px}
+  .app{display:block}
+  .sidebar{display:none}
+  .main{padding:10px 10px 96px}
+  .topbar{margin:-10px -10px 10px;padding:10px;display:block}
+  .topbar select{width:100%!important;margin-top:8px}
+  .topbar div[style*="display:flex"]{margin-top:8px}
+  .tabs{gap:4px;position:sticky;top:0;background:#f4f6f9;z-index:4;padding-top:6px}
+  .tabs button{font-size:14px;padding:12px 10px}
+  .tableGrid,.grid{grid-template-columns:1fr}
+  .footer{left:0;overflow:auto;font-size:12px}
+  .checks{grid-template-columns:1fr}
+  .card{border-radius:18px;padding:14px;margin:10px 0}
+  input,select,button{font-size:17px;min-height:52px}
+  .item{padding:14px}
+  .row{display:block}
+  .row>div[style*="width"]{width:100%!important;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .row>div[style*="width"] button{margin-top:0}
+  table{display:block;overflow-x:auto;white-space:nowrap}
+  .fab{display:flex!important}
+}
+.fab{display:none;position:fixed;right:18px;bottom:54px;width:58px;height:58px;border-radius:999px;font-size:32px;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(0,0,0,.25);z-index:10}
+@media print{.sidebar,.topbar,.tabs,.footer,.noPrint,.fab{display:none!important}.app{display:block}.main{padding:0}.card{box-shadow:none;border:0}}
 </style>
 </head>
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V6.6</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V7.0</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -118,12 +140,16 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
             <option value="25">FXP 25</option>
             <option value="32">FXP 32</option>
           </select>
+          <select id="newHoseCross">
+            <option value="1,5" selected>1,5 mm²</option>
+            <option value="2,5">2,5 mm²</option>
+          </select>
           <button class="secondary" onclick="createHose()">Schlauch hinzufügen</button>
         </div>
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">V6.6: Berechnung zeigt jetzt den Leitungsverlauf je Schlauch: Verteiler → Dose → Dose, mit Verbindung, FXP und Einzeldrähten.</div>
+      <div class="notice" style="margin-top:12px">V7.0: Leiterquerschnitt 1,5 / 2,5 mm² pro Schlauch, Handy-Optimierung und Zoom deaktiviert.</div>
     </div>
   </section>
 
@@ -142,6 +168,10 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
             <option value="20" selected>FXP 20</option>
             <option value="25">FXP 25</option>
             <option value="32">FXP 32</option>
+          </select>
+          <select id="newHoseCross2">
+            <option value="1,5" selected>1,5 mm²</option>
+            <option value="2,5">2,5 mm²</option>
           </select>
           <button onclick="createHose()">+ Schlauch hinzufügen</button>
         </div>
@@ -245,7 +275,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v66";
+const KEY="elektroplan_v70";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 const FXP_SIZES=["16","20","25","32"];
@@ -255,7 +285,7 @@ function uid(){return"p"+Date.now()+"_"+Math.floor(Math.random()*9999)}
 function hid(){return"h"+Date.now()+"_"+Math.floor(Math.random()*9999)}
 function freshProject(name){
   const p={id:uid(),name:name||"Neues Projekt",rooms:[...DEFAULT_ROOMS],hoses:[],doses:[]};
-  p.hoses.push({id:hid(),room:"Wohnzimmer",name:"Schlauch 1",fxp:"20"});
+  p.hoses.push({id:hid(),room:"Wohnzimmer",name:"Schlauch 1",fxp:"20",cross:"1,5"});
   return p;
 }
 function loadDB(){try{return JSON.parse(localStorage.getItem(KEY))||{currentId:null,projects:[]}}catch{return{currentId:null,projects:[]}}}
@@ -267,8 +297,9 @@ function cleanRooms(p){
 function migrate(p){
   cleanRooms(p);
   if(!p.hoses)p.hoses=[];
+  p.hoses.forEach(h=>{if(!h.cross)h.cross="1,5"; if(!h.fxp)h.fxp="20"});
   if(!p.hoses.length){
-    p.rooms.forEach(r=>p.hoses.push({id:hid(),room:r,name:"Schlauch 1",fxp:"20"}));
+    p.rooms.forEach(r=>p.hoses.push({id:hid(),room:r,name:"Schlauch 1",fxp:"20",cross:"1,5"}));
   }
   p.doses.forEach(d=>{
     if(!d.hoseId){
@@ -300,7 +331,7 @@ function hoseChanged(id){activeHoseId=id;let p=current();let h=p.hoses.find(x=>x
 function hosesInRoom(p,room){return p.hoses.filter(h=>h.room===room)}
 function createHoseForProject(p,room,render=true){
   const nr=hosesInRoom(p,room).length+1;
-  const h={id:hid(),room,name:"Schlauch "+nr,fxp:"20"};
+  const h={id:hid(),room,name:"Schlauch "+nr,fxp:"20",cross:"1,5"};
   p.hoses.push(h);
   if(render)store();
   return h;
@@ -310,7 +341,10 @@ function createHose(){
   let h=createHoseForProject(p,activeRoom,false);
   const s1=document.getElementById("newHoseFxp");
   const s2=document.getElementById("newHoseFxp2");
+  const c1=document.getElementById("newHoseCross");
+  const c2=document.getElementById("newHoseCross2");
   h.fxp=(s2&&s2.value)||(s1&&s1.value)||"20";
+  h.cross=(c2&&c2.value)||(c1&&c1.value)||"1,5";
   activeHoseId=h.id;
   store()
 }
@@ -328,7 +362,7 @@ function doseRoomChanged(){
   activeRoom=room;
   let hs=hosesInRoom(p,room);
   if(!hs.length)hs=[createHoseForProject(p,room,false)];
-  doseHoseSelect.innerHTML=hs.map(h=>`<option value="${h.id}" ${h.id===activeHoseId?"selected":""}>${esc(h.name)} · FXP ${esc(h.fxp)}</option>`).join("");
+  doseHoseSelect.innerHTML=hs.map(h=>`<option value="${h.id}" ${h.id===activeHoseId?"selected":""}>${esc(h.name)} · FXP ${esc(h.fxp)} · ${esc(h.cross||"1,5")} mm²</option>`).join("");
   if(!hs.some(h=>h.id===activeHoseId))activeHoseId=hs[0].id;
   doseHoseSelect.value=activeHoseId;
   doseHoseChanged();
@@ -410,7 +444,7 @@ function calcAll(){
 function eCount(w){return w.filter(x=>!x.includes("Netzwerk")).length}
 function suggest(w,hose){
   let n=eCount(w),net=w.some(x=>x.includes("Netzwerk"));
-  let base=n===0?"keine 230V-Adern":`${n} Einzeldrähte 1,5 mm² im FXP ${hose?.fxp||"20"}`;
+  let base=n===0?"keine 230V-Adern":`${n} Einzeldrähte ${hose?.cross||"1,5"} mm² im FXP ${hose?.fxp||"20"}`;
   return net?base+" + 1× Netzwerkkabel":base;
 }
 function wireColor(w){if(w==="PE")return"yellowgreen";if(w.includes("N "))return"blue";if(w.includes("Steckdose"))return"brown";if(w.includes("K2"))return"grey";if(w.includes("K1"))return"black";if(w.includes("geschaltet"))return"black";if(w.includes("L Licht"))return"black";if(w.includes("Netzwerk"))return"purple";return"orange"}
@@ -431,10 +465,10 @@ function renderAll(){
   if(!activeHoseId || !hs.some(h=>h.id===activeHoseId))activeHoseId=hs[0].id;
 
   roomList.innerHTML=p.rooms.map(r=>`<div class="navItem ${r===activeRoom?"active":""}" onclick="activeRoom='${esc(r)}';activeHoseId=null;store()"><span>▱ ${esc(r)}</span><span class="badge">${p.doses.filter(d=>d.room===r).length}</span></div>`).join("");
-  sideHoseList.innerHTML=hs.map(h=>`<div class="navItem ${h.id===activeHoseId?"active":""}" onclick="hoseChanged('${h.id}')"><span>${esc(h.name)}<br><small>FXP ${esc(h.fxp)}</small></span><span class="badge">${dosesInHose(p,h.id).length}</span></div>`).join("");
+  sideHoseList.innerHTML=hs.map(h=>`<div class="navItem ${h.id===activeHoseId?"active":""}" onclick="hoseChanged('${h.id}')"><span>${esc(h.name)}<br><small>FXP ${esc(h.fxp)} · ${esc(h.cross||"1,5")} mm²</small></span><span class="badge">${dosesInHose(p,h.id).length}</span></div>`).join("");
   projectName.value=p.name;
   roomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
-  hoseSelectTop.innerHTML=hs.map(h=>`<option value="${h.id}" ${h.id===activeHoseId?"selected":""}>${esc(h.name)} · FXP ${esc(h.fxp)}</option>`).join("");
+  hoseSelectTop.innerHTML=hs.map(h=>`<option value="${h.id}" ${h.id===activeHoseId?"selected":""}>${esc(h.name)} · FXP ${esc(h.fxp)} · ${esc(h.cross||"1,5")} mm²</option>`).join("");
   hoseRoomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
   doseRoomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
   if(editIndex===null)doseRoomChanged();
@@ -454,7 +488,7 @@ function renderHoses(p){
       <div class="row">
         <div style="flex:1">
           <div class="name">${esc(h.name)}</div>
-          <div class="muted">${esc(h.room)} · FXP ${esc(h.fxp)} · ${dosesInHose(p,h.id).length} Dosen</div>
+          <div class="muted">${esc(h.room)} · FXP ${esc(h.fxp)} · ${esc(h.cross||"1,5")} mm² · ${dosesInHose(p,h.id).length} Dosen</div>
 
           <label>Name</label>
           <input value="${esc(h.name)}" onchange="updateHose('${h.id}','name',this.value)">
@@ -465,6 +499,11 @@ function renderHoses(p){
             <option value="20" ${h.fxp==="20"?"selected":""}>FXP 20</option>
             <option value="25" ${h.fxp==="25"?"selected":""}>FXP 25</option>
             <option value="32" ${h.fxp==="32"?"selected":""}>FXP 32</option>
+          </select>
+          <label>Leiterquerschnitt</label>
+          <select onchange="updateHose('${h.id}','cross',this.value)">
+            <option value="1,5" ${h.cross==="1,5"?"selected":""}>1,5 mm²</option>
+            <option value="2,5" ${h.cross==="2,5"?"selected":""}>2,5 mm²</option>
           </select>
         </div>
         <div style="width:120px">
@@ -478,7 +517,7 @@ function renderDoses(p){
   sideDoseList.innerHTML=dosesInHose(p,activeHoseId).map(d=>`<div class="navItem"><span>▣ ${esc(d.name)}<br><small>${esc(d.devices.join(", "))}</small></span></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";
   doseList.innerHTML=p.hoses.filter(h=>h.room===activeRoom).map(h=>{
     const ds=dosesInHose(p,h.id);
-    return `<h3>${esc(h.name)} · FXP ${esc(h.fxp)}</h3>` + (ds.map(d=>{
+    return `<h3>${esc(h.name)} · FXP ${esc(h.fxp)} · ${esc(h.cross||"1,5")} mm²</h3>` + (ds.map(d=>{
       const i=p.doses.indexOf(d);
       return `<div class="item"><div class="row"><div><div class="name">${i+1}. ▣ ${esc(d.name)}</div><div class="muted">${esc(d.room)} · ${esc(h.name)} · ${esc(d.type)}</div>${d.devices.map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div><div style="width:95px"><button onclick="move(${i},-1)">↑</button><button onclick="move(${i},1)">↓</button><button class="secondary" onclick="editDose(${i})">Ändern</button><button class="danger" onclick="deleteDose(${i})">Löschen</button></div></div></div>`;
     }).join("") || "<div class='muted'>Keine Dosen in diesem Schlauch.</div>");
@@ -533,23 +572,23 @@ function renderTables(groups){
 }
 function renderMaterial(){
   const p=current(),groups=calcAll();
-  let counts={},totalWires=0,net=0,fxp={};
+  let counts={},totalWires=0,net=0,fxp={},wireCross={};
   p.doses.forEach(d=>d.devices.forEach(g=>counts[g]=(counts[g]||0)+1));
   groups.forEach(g=>{
     if(g.doses.length)fxp[g.hose.fxp]=(fxp[g.hose.fxp]||0)+1;
-    g.calc.forEach(w=>{totalWires+=eCount(w); if(w.some(x=>x.includes("Netzwerk")))net++});
+    g.calc.forEach(w=>{const n=eCount(w); totalWires+=n; wireCross[g.hose.cross||"1,5"]=(wireCross[g.hose.cross||"1,5"]||0)+n; if(w.some(x=>x.includes("Netzwerk")))net++});
   });
   materialList.innerHTML=`<h3>Geräte</h3>${Object.entries(counts).map(([k,v])=>`<div>${v} × ${esc(k)}</div>`).join("")||"<div class='muted'>Noch keine Geräte.</div>"}
   <h3>FXP Schläuche</h3>${Object.entries(fxp).map(([k,v])=>`<div>${v} × FXP ${esc(k)}</div>`).join("")||"<div class='muted'>Noch keine belegten Schläuche.</div>"}
-  <h3>Einzeldrähte / Netzwerk</h3><div>${totalWires} × Einzeldraht 1,5 mm² laut Berechnung</div>${net?`<div>${net} × Netzwerkkabel</div>`:""}
+  <h3>Einzeldrähte / Netzwerk</h3>${Object.entries(wireCross).map(([q,v])=>`<div>${v} × Einzeldraht ${esc(q)} mm² laut Berechnung</div>`).join("")}<div>Gesamt: ${totalWires} Einzeldrähte</div>${net?`<div>${net} × Netzwerkkabel</div>`:""}
   <h3>Adern pro Verbindung</h3><div id="materialConnections">${strandTable.innerHTML}</div>`;
 }
 function loadExample(render=true){
   let p=current();
   p.name="EFH Maier";
   p.hoses=[];
-  let h1={id:hid(),room:"Wohnzimmer",name:"Schlauch 1",fxp:"20"};
-  let h2={id:hid(),room:"Schlafzimmer",name:"Schlauch 1",fxp:"16"};
+  let h1={id:hid(),room:"Wohnzimmer",name:"Schlauch 1",fxp:"20",cross:"1,5"};
+  let h2={id:hid(),room:"Schlafzimmer",name:"Schlauch 1",fxp:"16",cross:"2,5"};
   p.hoses.push(h1,h2);
   p.doses=[
     {room:"Wohnzimmer",hoseId:h1.id,name:"WZ01",type:"3-fach Dose",devices:["Steckdose","Steckdose 2","Wechselschalter"]},
