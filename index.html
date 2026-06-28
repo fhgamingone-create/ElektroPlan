@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ElektroPlan V7.2</title>
+<title>ElektroPlan V7.3</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -71,7 +71,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V7.2</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V7.3</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -94,7 +94,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 
 <main class="main">
   <div class="topbar">
-    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted" style="margin-left:8px">Version 7.2</span></div>
+    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted" style="margin-left:8px">Version 7.3</span></div>
     <div style="display:flex;gap:8px">
       <button class="secondary" onclick="exportProject()" style="width:auto">Export</button><button class="secondary" onclick="document.getElementById('importFileTop').click()" style="width:auto">Import</button>
       <button onclick="window.print()" style="width:auto">PDF/Drucken</button>
@@ -138,7 +138,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">V7.2: Version sichtbar, Schlauch-Eingabe vereinfacht und doppelte Schlauch-Auswahl entfernt.</div>
+      <div class="notice" style="margin-top:12px">V7.3: Schläuche werden sauber nach Raum und Schlauch-Nummer sortiert.</div>
       <div class="grid" style="margin-top:12px">
         <button class="green" onclick="exportProject()">Projekt exportieren</button>
         <button class="secondary" onclick="document.getElementById('importFileTop').click()">Projekt importieren</button>
@@ -265,7 +265,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v72";
+const KEY="elektroplan_v73";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 const FXP_SIZES=["16","20","25","32"];
@@ -305,7 +305,7 @@ function ensure(){
     db.projects.push(p);
     currentId=p.id;
   } else if(!currentId) currentId=db.projects[0].id;
-  db.projects.forEach(migrate);
+  db.projects.forEach(p=>{migrate(p);sortHoses(p)});
   const p=current();
   if(p && !activeHoseId){
     let h=hosesInRoom(p,activeRoom)[0] || p.hoses[0];
@@ -319,11 +319,26 @@ function deleteCurrentProject(){let p=current();if(!p)return;if(!confirm("Projek
 function addRoom(){let p=current(),r=newRoom.value.trim();if(!p||!r)return;if(!p.rooms.includes(r))p.rooms.push(r);let h=createHoseForProject(p,r,false);activeRoom=r;activeHoseId=h.id;newRoom.value="";store()}
 function roomChanged(){let p=current();activeRoom=roomSelect.value;let h=hosesInRoom(p,activeRoom)[0]||createHoseForProject(p,activeRoom,false);activeHoseId=h.id;store()}
 function hoseChanged(id){activeHoseId=id;let p=current();let h=p.hoses.find(x=>x.id===id);if(h)activeRoom=h.room;store()}
-function hosesInRoom(p,room){return p.hoses.filter(h=>h.room===room)}
+function hoseNum(h){
+  const m=String(h.name||"").match(/(\d+)/);
+  return m?parseInt(m[1],10):9999;
+}
+function sortHoses(p){
+  const roomIndex=r=>p.rooms.indexOf(r)===-1?999:p.rooms.indexOf(r);
+  p.hoses.sort((a,b)=>{
+    const ra=roomIndex(a.room), rb=roomIndex(b.room);
+    if(ra!==rb)return ra-rb;
+    const na=hoseNum(a), nb=hoseNum(b);
+    if(na!==nb)return na-nb;
+    return String(a.name).localeCompare(String(b.name));
+  });
+}
+function hosesInRoom(p,room){sortHoses(p);return p.hoses.filter(h=>h.room===room)}
 function createHoseForProject(p,room,render=true){
   const nr=hosesInRoom(p,room).length+1;
   const h={id:hid(),room,name:"Schlauch "+nr,fxp:"20",cross:"1,5"};
   p.hoses.push(h);
+  sortHoses(p);
   if(render)store();
   return h;
 }
@@ -423,6 +438,7 @@ function calcForDoses(doses){
 }
 function calcAll(){
   let p=current(),out=[];
+  sortHoses(p);
   p.hoses.forEach(h=>{
     const ds=dosesInHose(p,h.id);
     const c=calcForDoses(ds);
@@ -447,7 +463,7 @@ function renderSelectorsOnly(){
   projectList.innerHTML=db.projects.map(pr=>`<div class="navItem ${pr.id===currentId?"active":""}" onclick="openProject('${pr.id}')"><span>📁 ${esc(pr.name)}</span><span class="badge">${pr.doses.length}</span></div>`).join("");
 }
 function renderAll(){
-  let p=current();if(!p)return;migrate(p);renderSelectorsOnly();
+  let p=current();if(!p)return;migrate(p);sortHoses(p);renderSelectorsOnly();
   if(!activeRoom || !p.rooms.includes(activeRoom))activeRoom=p.rooms[0]||"Wohnzimmer";
   let hs=hosesInRoom(p,activeRoom);
   if(!hs.length){let h=createHoseForProject(p,activeRoom,false);hs=[h];activeHoseId=h.id}
