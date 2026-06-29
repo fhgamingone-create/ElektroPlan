@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ElektroPlan V7.3</title>
+<title>ElektroPlan V8.0</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -71,7 +71,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V7.3</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V8.0</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -94,7 +94,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 
 <main class="main">
   <div class="topbar">
-    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted" style="margin-left:8px">Version 7.3</span></div>
+    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted" style="margin-left:8px">Version 8.0</span></div>
     <div style="display:flex;gap:8px">
       <button class="secondary" onclick="exportProject()" style="width:auto">Export</button><button class="secondary" onclick="document.getElementById('importFileTop').click()" style="width:auto">Import</button>
       <button onclick="window.print()" style="width:auto">PDF/Drucken</button>
@@ -138,7 +138,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">V7.3: Schläuche werden sauber nach Raum und Schlauch-Nummer sortiert.</div>
+      <div class="notice" style="margin-top:12px">V8.0: Abschnittsberechnung. Berechnet werden jetzt die Adern im Schlauch zwischen Verteiler → Dose → Dose.</div>
       <div class="grid" style="margin-top:12px">
         <button class="green" onclick="exportProject()">Projekt exportieren</button>
         <button class="secondary" onclick="document.getElementById('importFileTop').click()">Projekt importieren</button>
@@ -215,6 +215,8 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
         <label class="check"><input type="checkbox" value="Kreuzschalter">Kreuzschalter</label>
         <label class="check"><input type="checkbox" value="Lampe">Lampe</label>
         <label class="check"><input type="checkbox" value="Netzwerkdose">Netzwerkdose</label>
+        <label class="check"><input type="checkbox" value="Herdanschluss">Herdanschluss 5×2,5</label>
+        <label class="check"><input type="checkbox" value="Geschirrspüler">Geschirrspüler 3×2,5</label>
       </div>
 
       <button onclick="saveDose()">Dose speichern</button>
@@ -229,7 +231,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 
   <section id="tabCalc" class="hidden">
     <div class="card">
-      <h2>Adernberechnung je Schlauch</h2>
+      <h2>Abschnittsberechnung je Schlauch</h2>
       <div id="calcList"></div>
     </div>
     <div class="tableGrid">
@@ -265,7 +267,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v73";
+const KEY="elektroplan_v80";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 const FXP_SIZES=["16","20","25","32"];
@@ -410,31 +412,120 @@ function has(d,x){return d.devices.includes(x)}
 function socketCount(d){return (has(d,"Steckdose")?1:0)+(has(d,"Steckdose 2")?1:0)}
 function hasSocket(d){return socketCount(d)>0}
 function hasNetwork(d){return has(d,"Netzwerkdose")||d.type==="Netzwerkdose"}
+function hasHerd(d){return has(d,"Herdanschluss")}
+function hasGeschirr(d){return has(d,"Geschirrspüler")}
 function dosesInHose(p,hoseId){return p.doses.filter(d=>d.hoseId===hoseId)}
 function calcForDoses(doses){
+  // V8.0: Abschnittsberechnung.
+  // res[i] beschreibt den Schlauchabschnitt:
+  // i = 0: Verteiler -> Dose 1
+  // i > 0: Dose i -> Dose i+1
   let res=doses.map(()=>new Set());
+
+  // Steckdosenstromkreis wird bis zur letzten Steckdose im Schlauch mitgeführt
   let socketEnd=-1;
   doses.forEach((d,i)=>{if(hasSocket(d))socketEnd=i});
-  for(let i=0;i<=socketEnd;i++){res[i].add("L Steckdose");res[i].add("N Steckdose");res[i].add("PE")}
-  doses.forEach((d,i)=>{
-    if(has(d,"Schalter")){res[i].add("L Licht");res[i].add("L geschaltet zurück")}
-    if(has(d,"Serienschalter")){res[i].add("L Licht");res[i].add("L1 geschaltet zurück");res[i].add("L2 geschaltet zurück")}
-    if(has(d,"Lampe")){res[i].add("L geschaltet");res[i].add("N Licht");res[i].add("PE")}
-    if(hasNetwork(d))res[i].add("Netzwerkkabel Cat / Datenleitung")
+  for(let i=0;i<=socketEnd;i++){
+    res[i].add("L Steckdose");
+    res[i].add("N Steckdose");
+    res[i].add("PE");
+  }
+
+  // Netzwerk: Kabel läuft vom Verteiler bis zur jeweiligen Netzwerkdose mit
+  doses.forEach((d,idx)=>{
+    if(hasNetwork(d)){
+      for(let i=0;i<=idx;i++)res[i].add("Netzwerkkabel Cat / Datenleitung");
+    }
   });
+
+  // Herd / Geschirrspüler: eigene Zuleitung bis zu dieser Anschlussdose
+  doses.forEach((d,idx)=>{
+    if(hasHerd(d)){
+      for(let i=0;i<=idx;i++){
+        res[i].add("Herd L1 2,5");
+        res[i].add("Herd L2 2,5");
+        res[i].add("Herd L3 2,5");
+        res[i].add("Herd N 2,5");
+        res[i].add("Herd PE 2,5");
+      }
+    }
+    if(hasGeschirr(d)){
+      for(let i=0;i<=idx;i++){
+        res[i].add("Geschirrspüler L 2,5");
+        res[i].add("Geschirrspüler N 2,5");
+        res[i].add("Geschirrspüler PE 2,5");
+      }
+    }
+  });
+
+  // Einfache Schalter / Serienschalter: Zuleitung und geschaltete Rückleiter bis zur Dose
+  doses.forEach((d,idx)=>{
+    if(has(d,"Schalter")){
+      for(let i=0;i<=idx;i++){
+        res[i].add("L Licht");
+        res[i].add("L geschaltet zurück");
+      }
+    }
+    if(has(d,"Serienschalter")){
+      for(let i=0;i<=idx;i++){
+        res[i].add("L Licht");
+        res[i].add("L1 geschaltet zurück");
+        res[i].add("L2 geschaltet zurück");
+      }
+    }
+    if(has(d,"Lampe")){
+      for(let i=0;i<=idx;i++){
+        res[i].add("L geschaltet");
+        res[i].add("N Licht");
+        res[i].add("PE");
+      }
+    }
+  });
+
+  // Wechsel-/Kreuzschaltung:
+  // Im Schlauchabschnitt laufen zwischen den Schaltern nur K1/K2 weiter.
+  // Kreuzschalter hat intern 4 Klemmen, aber pro Abschnitt nur 2 Korrespondierende.
   let ws=doses.map((d,i)=>has(d,"Wechselschalter")?i:null).filter(x=>x!==null);
   let ks=doses.map((d,i)=>has(d,"Kreuzschalter")?i:null).filter(x=>x!==null);
-  if(ws.length>=2){
-    let first=ws[0],last=ws[ws.length-1];
-    for(let i=first;i<=last;i++){
-      if(i===first){res[i].add("L Licht");res[i].add("K1");res[i].add("K2")}
-      else if(i===last){res[i].add("K1");res[i].add("K2");res[i].add("L geschaltet zurück")}
-      else if(ks.includes(i)){res[i].add("K1 rein");res[i].add("K2 rein");res[i].add("K1 raus");res[i].add("K2 raus")}
-      else{res[i].add("K1");res[i].add("K2")}
+
+  if(ws.length===1){
+    const last=ws[0];
+    for(let i=0;i<=last;i++){
+      res[i].add("L Licht");
+      res[i].add("K1");
+      res[i].add("K2");
     }
-    for(let i=0;i<=last;i++)res[i].add("L geschaltet zurück")
   }
-  return res.map(s=>Array.from(s))
+
+  if(ws.length>=2){
+    const first=ws[0], last=ws[ws.length-1];
+
+    // vom Verteiler bis zum letzten Wechselschalter:
+    // L Licht, K1, K2 und der geschaltete Draht retour werden mitgeführt
+    for(let i=0;i<=last;i++){
+      res[i].add("K1");
+      res[i].add("K2");
+      res[i].add("L geschaltet zurück");
+    }
+
+    // L Licht wird bis zur ersten Wechselschalter-Dose geführt
+    for(let i=0;i<=first;i++){
+      res[i].add("L Licht");
+    }
+  }
+
+  // Falls ein Kreuzschalter ohne vollständig angelegte Wechselschaltung existiert:
+  // pro Abschnitt trotzdem nur 2 Korrespondierende rechnen.
+  if(ws.length<2 && ks.length){
+    ks.forEach(idx=>{
+      for(let i=0;i<=idx;i++){
+        res[i].add("K1");
+        res[i].add("K2");
+      }
+    });
+  }
+
+  return res.map(s=>Array.from(s));
 }
 function calcAll(){
   let p=current(),out=[];
@@ -449,10 +540,15 @@ function calcAll(){
 function eCount(w){return w.filter(x=>!x.includes("Netzwerk")).length}
 function suggest(w,hose){
   let n=eCount(w),net=w.some(x=>x.includes("Netzwerk"));
-  let base=n===0?"keine 230V-Adern":`${n} Einzeldrähte ${hose?.cross||"1,5"} mm² im FXP ${hose?.fxp||"20"}`;
+  let has25=w.some(x=>x.includes("2,5"));
+  let q=has25?"2,5":(hose?.cross||"1,5");
+  let base=n===0?"keine 230V-Adern":`${n} Einzeldrähte ${q} mm² im FXP ${hose?.fxp||"20"}`;
+  if(w.some(x=>x.includes("Herd ")))base+=" (Herd 5×2,5)";
+  if(w.some(x=>x.includes("Geschirrspüler ")))base+=" (Geschirrspüler 3×2,5)";
   return net?base+" + 1× Netzwerkkabel":base;
 }
-function wireColor(w){if(w==="PE")return"yellowgreen";if(w.includes("N "))return"blue";if(w.includes("Steckdose"))return"brown";if(w.includes("K2"))return"grey";if(w.includes("K1"))return"black";if(w.includes("geschaltet"))return"black";if(w.includes("L Licht"))return"black";if(w.includes("Netzwerk"))return"purple";return"orange"}
+function crossForWire(w,hose){if(w.includes("2,5"))return "2,5";return hose?.cross||"1,5"}
+function wireColor(w){if(w==="PE")return"yellowgreen";if(w.includes("N "))return"blue";if(w.includes("Steckdose"))return"brown";if(w.includes("K2"))return"grey";if(w.includes("K1"))return"black";if(w.includes("geschaltet"))return"black";if(w.includes("L Licht"))return"black";if(w.includes("Netzwerk"))return"purple";if(w.includes("Herd L")||w.includes("Geschirrspüler L"))return"black";if(w.includes("Herd N")||w.includes("Geschirrspüler N"))return"blue";if(w.includes("Herd PE")||w.includes("Geschirrspüler PE"))return"yellowgreen";return"orange"}
 function wireHTML(w){return `<div class="wire"><span class="dot ${wireColor(w)}"></span>${esc(w)}</div>`}
 function show(tab){["Overview","Doses","Calc","Material"].forEach(t=>{document.getElementById("tab"+t).classList.add("hidden");document.getElementById("b"+t).classList.remove("active")});document.getElementById("tab"+tab).classList.remove("hidden");document.getElementById("b"+tab).classList.add("active");renderAll()}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
@@ -580,7 +676,7 @@ function renderMaterial(){
   p.doses.forEach(d=>d.devices.forEach(g=>counts[g]=(counts[g]||0)+1));
   groups.forEach(g=>{
     if(g.doses.length)fxp[g.hose.fxp]=(fxp[g.hose.fxp]||0)+1;
-    g.calc.forEach(w=>{const n=eCount(w); totalWires+=n; wireCross[g.hose.cross||"1,5"]=(wireCross[g.hose.cross||"1,5"]||0)+n; if(w.some(x=>x.includes("Netzwerk")))net++});
+    g.calc.forEach(w=>{const n=eCount(w); totalWires+=n; w.filter(x=>!x.includes("Netzwerk")).forEach(x=>{const q=crossForWire(x,g.hose); wireCross[q]=(wireCross[q]||0)+1}); if(w.some(x=>x.includes("Netzwerk")))net++});
   });
   materialList.innerHTML=`<h3>Geräte</h3>${Object.entries(counts).map(([k,v])=>`<div>${v} × ${esc(k)}</div>`).join("")||"<div class='muted'>Noch keine Geräte.</div>"}
   <h3>FXP Schläuche</h3>${Object.entries(fxp).map(([k,v])=>`<div>${v} × FXP ${esc(k)}</div>`).join("")||"<div class='muted'>Noch keine belegten Schläuche.</div>"}
