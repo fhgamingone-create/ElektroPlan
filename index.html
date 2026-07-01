@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ElektroPlan V9.0</title>
+<title>ElektroPlan V9.1</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -71,7 +71,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V9.0</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V9.1</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -94,7 +94,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 
 <main class="main">
   <div class="topbar">
-    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted" style="margin-left:8px">Version 9.0</span></div>
+    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted" style="margin-left:8px">Version 9.1</span></div>
     <div style="display:flex;gap:8px">
       <button class="secondary" onclick="exportProject()" style="width:auto">Export</button><button class="secondary" onclick="document.getElementById('importFileTop').click()" style="width:auto">Import</button>
       <button onclick="window.print()" style="width:auto">PDF/Drucken</button>
@@ -150,7 +150,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">V9.0: Geführte Eingabe und Reihenklemmen.</div>
+      <div class="notice" style="margin-top:12px">V9.1: Dosen in der linken Liste sind anklickbar und können direkt geändert werden.</div>
       <div class="grid" style="margin-top:12px">
         <button class="green" onclick="exportProject()">Projekt exportieren</button>
         <button class="secondary" onclick="document.getElementById('importFileTop').click()">Projekt importieren</button>
@@ -284,7 +284,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v90";
+const KEY="elektroplan_v91";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 const FXP_SIZES=["16","20","25","32"];
@@ -631,7 +631,10 @@ function renderHoses(p){
     </div>`).join("") : "<div class='muted'>Noch kein Schlauch.</div>";
 }
 function renderDoses(p){
-  sideDoseList.innerHTML=dosesInHose(p,activeHoseId).map(d=>`<div class="navItem"><span>▣ ${esc(d.name)}<br><small>${esc(d.devices.join(", "))}</small></span></div>`).join("")||"<div class='muted'>Noch keine Dosen.</div>";
+  sideDoseList.innerHTML=dosesInHose(p,activeHoseId).map(d=>{
+    const idx=p.doses.indexOf(d);
+    return `<div class="navItem" onclick="editDose(${idx})"><span>▣ ${esc(d.name)}<br><small>${esc(d.devices.join(", "))}</small></span><span class="badge">ändern</span></div>`;
+  }).join("")||"<div class='muted'>Noch keine Dosen.</div>";
   doseList.innerHTML=p.hoses.filter(h=>h.room===activeRoom).map(h=>{
     const ds=dosesInHose(p,h.id);
     return `<h3>${esc(h.name)} · FXP ${esc(h.fxp)} · ${esc(h.cross||"1,5")} mm²</h3>` + (ds.map(d=>{
