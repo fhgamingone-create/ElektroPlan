@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ElektroPlan V10.0</title>
+<title>ElektroPlan V10.1</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -39,7 +39,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px
 <body>
 <div class="app">
 <aside class="sidebar">
-<h1>⚡ ElektroPlan <span class="ver">V10.0</span></h1>
+<h1>⚡ ElektroPlan <span class="ver">V10.1</span></h1>
 <div class="sectionTitle">Projekt</div>
 <div id="treeProject"></div>
 <button onclick="newProject()">+ Projekt</button>
@@ -51,7 +51,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px
 
 <main class="main">
 <div class="topbar">
-  <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted">Version 10.0</span></div>
+  <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted">Version 10.1</span></div>
   <div style="display:flex;gap:8px"><button class="secondary" onclick="exportProject()" style="width:auto">Export</button><button class="secondary" onclick="document.getElementById('importFile').click()" style="width:auto">Import</button><button onclick="window.print()" style="width:auto">PDF/Drucken</button><input id="importFile" class="hidden" type="file" accept=".json" onchange="importProject(event)"></div>
 </div>
 
@@ -88,7 +88,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px
 <div class="footer"><span>✅ Automatisch gespeichert</span><span id="footerStats"></span></div>
 
 <script>
-const KEY="elektroplan_v100";
+const KEY="elektroplan_v101";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 let db=loadDB(), currentId=null, selected={type:"project",room:null,hoseId:null,doseId:null}, activeTab="Edit";
@@ -96,11 +96,11 @@ let db=loadDB(), currentId=null, selected={type:"project",room:null,hoseId:null,
 function uid(){return"p"+Date.now()+"_"+Math.floor(Math.random()*9999)}
 function hid(){return"h"+Date.now()+"_"+Math.floor(Math.random()*9999)}
 function did(){return"d"+Date.now()+"_"+Math.floor(Math.random()*9999)}
-function freshProject(name){let h={id:hid(),room:"Wohnzimmer",name:"Schlauch 1",fxp:"20",cross:"1,5"};return{id:uid(),name:name||"Neues Projekt",rooms:[...DEFAULT_ROOMS],hoses:[h],doses:[]}}
+function freshProject(name){let h={id:hid(),room:"Wohnzimmer",name:"Schlauch 1",fxp:"20",cross:"1,5"};return{id:uid(),name:name||"Neues Projekt",rooms:[...DEFAULT_ROOMS],hoses:[h],doses:[],lightGroups:["Lichtkreis 1"]}}
 function loadDB(){try{return JSON.parse(localStorage.getItem(KEY))||{currentId:null,projects:[]}}catch{return{currentId:null,projects:[]}}}
 function store(){db.currentId=currentId;localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
 function current(){return db.projects.find(p=>p.id===currentId)}
-function migrate(p){if(!p.rooms)p.rooms=[...DEFAULT_ROOMS];if(!p.hoses)p.hoses=[];if(!p.doses)p.doses=[];if(!p.hoses.length)p.hoses.push({id:hid(),room:p.rooms[0]||"Wohnzimmer",name:"Schlauch 1",fxp:"20",cross:"1,5"});p.hoses.forEach(h=>{if(!h.id)h.id=hid();if(!h.fxp)h.fxp="20";if(!h.cross)h.cross="1,5"});p.doses.forEach(d=>{if(!d.id)d.id=did();if(!d.hoseId){let h=p.hoses.find(x=>x.room===d.room)||p.hoses[0];d.hoseId=h.id;d.room=h.room}})}
+function migrate(p){if(!p.rooms)p.rooms=[...DEFAULT_ROOMS];if(!p.hoses)p.hoses=[];if(!p.doses)p.doses=[];if(!p.lightGroups)p.lightGroups=["Lichtkreis 1"];if(!p.hoses.length)p.hoses.push({id:hid(),room:p.rooms[0]||"Wohnzimmer",name:"Schlauch 1",fxp:"20",cross:"1,5"});p.hoses.forEach(h=>{if(!h.id)h.id=hid();if(!h.fxp)h.fxp="20";if(!h.cross)h.cross="1,5"});p.doses.forEach(d=>{if(!d.id)d.id=did();if(!d.hoseId){let h=p.hoses.find(x=>x.room===d.room)||p.hoses[0];d.hoseId=h.id;d.room=h.room}})}
 function ensure(){if(!db.projects.length)db.projects.push(freshProject("Neues Projekt"));currentId=db.currentId||db.projects[0].id;db.projects.forEach(migrate)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
 function roomCode(r){return ROOM_CODES[r]||r.substring(0,2).toUpperCase()}
@@ -123,27 +123,87 @@ function selectAddDose(){let p=current();let h=selected.hoseId?p.hoses.find(x=>x
 function saveProjectForm(){let p=current();p.name=document.getElementById("projectName").value.trim()||"Neues Projekt";store()}
 function saveHoseForm(id){let p=current(),h=p.hoses.find(x=>x.id===id);h.name=hoseName.value.trim()||h.name;h.fxp=hoseFxp.value;h.cross=hoseCross.value;store()}
 function deleteHose(id){let p=current();if(p.doses.some(d=>d.hoseId===id))return alert("Schlauch enthält Dosen.");if(!confirm("Schlauch löschen?"))return;p.hoses=p.hoses.filter(h=>h.id!==id);choose("project")}
-function saveDoseForm(existingId=null){let p=current(),h=p.hoses.find(x=>x.id===doseHose.value);let devices=Array.from(document.querySelectorAll("#deviceChecks input:checked")).map(x=>x.value);if(!devices.length)return alert("Bitte Gerät auswählen");let d={id:existingId||did(),room:h.room,hoseId:h.id,name:doseName.value.trim()||nextDoseName(h.room),type:doseType.value,devices};if(existingId){let i=p.doses.findIndex(x=>x.id===existingId);p.doses[i]=d}else p.doses.push(d);choose("hose",h.room,h.id)}
+function saveDoseForm(existingId=null){let p=current(),h=p.hoses.find(x=>x.id===doseHose.value);let devices=Array.from(document.querySelectorAll("#deviceChecks input:checked")).map(x=>x.value);if(!devices.length)return alert("Bitte Gerät auswählen");let lg=resolveLightGroup();let d={id:existingId||did(),room:h.room,hoseId:h.id,name:doseName.value.trim()||nextDoseName(h.room),type:doseType.value,devices,lightGroup:usesLight(devices)?lg:""};if(existingId){let i=p.doses.findIndex(x=>x.id===existingId);p.doses[i]=d}else p.doses.push(d);choose("hose",h.room,h.id)}
 function deleteDose(id){let p=current();if(!confirm("Dose löschen?"))return;p.doses=p.doses.filter(d=>d.id!==id);choose("project")}
 function moveDose(id,dir){let p=current(),i=p.doses.findIndex(d=>d.id===id),j=i+dir;if(i<0||j<0||j>=p.doses.length)return;[p.doses[i],p.doses[j]]=[p.doses[j],p.doses[i]];store()}
+
+function usesLight(devices){
+  return devices.some(v=>["Schalter","Serienschalter","Wechselschalter","Kreuzschalter","Lampe"].includes(v));
+}
+function lightGroupOptions(selectedGroup=""){
+  let p=current();
+  return (p.lightGroups||[]).map(g=>`<option ${g===selectedGroup?"selected":""}>${esc(g)}</option>`).join("") + `<option value="__new__">+ Neuer Lichtkreis...</option>`;
+}
+function lightGroupField(d=null){
+  return `<div class="grid">
+    <div>
+      <label>Lichtkreis / Schaltgruppe</label>
+      <select id="lightGroupSelect" onchange="toggleNewLightGroup()">${lightGroupOptions(d?.lightGroup||"")}</select>
+    </div>
+    <div>
+      <label>Neuer Lichtkreis</label>
+      <input id="newLightGroup" placeholder="z. B. Bad Licht" class="${d?.lightGroup?'hidden':''}">
+    </div>
+  </div>`;
+}
+function toggleNewLightGroup(){
+  const s=document.getElementById("lightGroupSelect"), n=document.getElementById("newLightGroup");
+  if(!s||!n)return;
+  n.classList.toggle("hidden", s.value!=="__new__");
+}
+function resolveLightGroup(){
+  const s=document.getElementById("lightGroupSelect"), n=document.getElementById("newLightGroup");
+  if(!s)return "";
+  let p=current(), g=s.value;
+  if(g==="__new__")g=(n.value||"").trim();
+  if(g && !p.lightGroups.includes(g))p.lightGroups.push(g);
+  return g;
+}
 function deviceChecks(dev=[]){let vals=["Steckdose","Steckdose 2","Schalter","Serienschalter","Wechselschalter","Kreuzschalter","Lampe","Netzwerkdose","Herdanschluss","Geschirrspüler"];return `<div class="checks" id="deviceChecks">`+vals.map(v=>`<label class="check"><input type="checkbox" value="${v}" ${dev.includes(v)?"checked":""}>${v}${v==="Herdanschluss"?" 5×2,5":v==="Geschirrspüler"?" 3×2,5":""}</label>`).join("")+`</div>`}
 function has(d,x){return d.devices.includes(x)} function socketCount(d){return(has(d,"Steckdose")?1:0)+(has(d,"Steckdose 2")?1:0)} function hasSocket(d){return socketCount(d)>0} function hasNetwork(d){return has(d,"Netzwerkdose")||d.type==="Netzwerkdose"} function hasHerd(d){return has(d,"Herdanschluss")} function hasGeschirr(d){return has(d,"Geschirrspüler")}
-function calcForDoses(doses){let res=doses.map(()=>new Set());let socketEnd=-1;doses.forEach((d,i)=>{if(hasSocket(d))socketEnd=i});for(let i=0;i<=socketEnd;i++){res[i].add("L Steckdose");res[i].add("N Steckdose");res[i].add("PE")}doses.forEach((d,idx)=>{if(hasNetwork(d))for(let i=0;i<=idx;i++)res[i].add("Netzwerkkabel Cat / Datenleitung");if(hasHerd(d))for(let i=0;i<=idx;i++){res[i].add("Herd L1 2,5");res[i].add("Herd L2 2,5");res[i].add("Herd L3 2,5");res[i].add("Herd N 2,5");res[i].add("Herd PE 2,5")}if(hasGeschirr(d))for(let i=0;i<=idx;i++){res[i].add("Geschirrspüler L 2,5");res[i].add("Geschirrspüler N 2,5");res[i].add("Geschirrspüler PE 2,5")}});doses.forEach((d,idx)=>{if(has(d,"Schalter"))for(let i=0;i<=idx;i++){res[i].add("L Licht");res[i].add("L geschaltet zurück")}if(has(d,"Serienschalter"))for(let i=0;i<=idx;i++){res[i].add("L Licht");res[i].add("L1 geschaltet zurück");res[i].add("L2 geschaltet zurück")}if(has(d,"Lampe"))for(let i=0;i<=idx;i++){res[i].add("L geschaltet");res[i].add("N Licht");res[i].add("PE")}});let ws=doses.map((d,i)=>has(d,"Wechselschalter")?i:null).filter(x=>x!==null),ks=doses.map((d,i)=>has(d,"Kreuzschalter")?i:null).filter(x=>x!==null);if(ws.length===1){let last=ws[0];for(let i=0;i<=last;i++){res[i].add("L Licht");res[i].add("K1");res[i].add("K2")}}if(ws.length>=2){let first=ws[0],last=ws[ws.length-1];for(let i=0;i<=last;i++){res[i].add("K1");res[i].add("K2");res[i].add("L geschaltet zurück")}for(let i=0;i<=first;i++)res[i].add("L Licht")}if(ws.length<2&&ks.length)ks.forEach(idx=>{for(let i=0;i<=idx;i++){res[i].add("K1");res[i].add("K2")}});return res.map(s=>Array.from(s))}
+function calcForDoses(doses){let res=doses.map(()=>new Set());let socketEnd=-1;doses.forEach((d,i)=>{if(hasSocket(d))socketEnd=i});for(let i=0;i<=socketEnd;i++){res[i].add("L Steckdose");res[i].add("N Steckdose");res[i].add("PE")}doses.forEach((d,idx)=>{if(hasNetwork(d))for(let i=0;i<=idx;i++)res[i].add("Netzwerkkabel Cat / Datenleitung");if(hasHerd(d))for(let i=0;i<=idx;i++){res[i].add("Herd L1 2,5");res[i].add("Herd L2 2,5");res[i].add("Herd L3 2,5");res[i].add("Herd N 2,5");res[i].add("Herd PE 2,5")}if(hasGeschirr(d))for(let i=0;i<=idx;i++){res[i].add("Geschirrspüler L 2,5");res[i].add("Geschirrspüler N 2,5");res[i].add("Geschirrspüler PE 2,5")}});doses.forEach((d,idx)=>{
+  const g=d.lightGroup?` (${d.lightGroup})`:"";
+  if(has(d,"Schalter"))for(let i=0;i<=idx;i++){res[i].add("L Licht"+g);res[i].add("L geschaltet zurück"+g)}
+  if(has(d,"Serienschalter"))for(let i=0;i<=idx;i++){res[i].add("L Licht"+g);res[i].add("L1 geschaltet zurück"+g);res[i].add("L2 geschaltet zurück"+g)}
+  if(has(d,"Lampe"))for(let i=0;i<=idx;i++){res[i].add("L geschaltet"+g);res[i].add("N Licht"+g);res[i].add("PE")}
+});let ws=doses.map((d,i)=>has(d,"Wechselschalter")?i:null).filter(x=>x!==null),ks=doses.map((d,i)=>has(d,"Kreuzschalter")?i:null).filter(x=>x!==null);if(ws.length===1){let last=ws[0];let g=doses[last].lightGroup?` (${doses[last].lightGroup})`:"";for(let i=0;i<=last;i++){res[i].add("L Licht"+g);res[i].add("K1"+g);res[i].add("K2"+g)}}if(ws.length>=2){let first=ws[0],last=ws[ws.length-1];let g=doses[last].lightGroup||doses[first].lightGroup;let gs=g?` (${g})`:"";for(let i=0;i<=last;i++){res[i].add("K1"+gs);res[i].add("K2"+gs);res[i].add("L geschaltet zurück"+gs)}for(let i=0;i<=first;i++)res[i].add("L Licht"+gs)}if(ws.length<2&&ks.length)ks.forEach(idx=>{let g=doses[idx].lightGroup?` (${doses[idx].lightGroup})`:"";for(let i=0;i<=idx;i++){res[i].add("K1"+g);res[i].add("K2"+g)}});return res.map(s=>Array.from(s))}
 function calcAll(){let p=current(),out=[];p.hoses.forEach(h=>{let ds=dosesInHose(p,h.id);out.push({hose:h,doses:ds,calc:calcForDoses(ds)})});return out}
 function eCount(w){return w.filter(x=>!x.includes("Netzwerk")).length}
 function suggest(w,h){let net=w.some(x=>x.includes("Netzwerk")),has25=w.some(x=>x.includes("2,5"));let q=has25?"2,5":(h.cross||"1,5");let base=`${eCount(w)} Einzeldrähte ${q} mm² im FXP ${h.fxp}`;return net?base+" + 1× Netzwerkkabel":base}
 function wireColor(w){if(w==="PE"||w.includes("PE"))return"yellowgreen";if(w.includes("N "))return"blue";if(w.includes("Steckdose"))return"brown";if(w.includes("K2"))return"grey";if(w.includes("Netzwerk"))return"purple";return"black"}
 function wireHTML(w){return `<div class="wire"><span class="dot ${wireColor(w)}"></span>${esc(w)}</div>`}
-function renderTree(){let p=current();projectSelect.innerHTML=db.projects.map(pr=>`<option value="${pr.id}" ${pr.id===p.id?"selected":""}>${esc(pr.name)}</option>`).join("");treeProject.innerHTML=`<div class="nav ${selected.type==="project"?"active":""}" onclick="choose('project')">📁 ${esc(p.name)}<span class="badge">${p.doses.length}</span></div>`;let html="";p.rooms.forEach(r=>{html+=`<div class="nav ${selected.type==="room"&&selected.room===r?"active":""}" onclick="choose('room','${esc(r)}')">🏠 ${esc(r)}<span class="badge">${p.doses.filter(d=>d.room===r).length}</span></div>`;hosesInRoom(p,r).forEach(h=>{html+=`<div class="nav indent1 ${selected.hoseId===h.id?"active":""}" onclick="choose('hose','${esc(r)}','${h.id}')">📦 ${esc(h.name)}<small>FXP ${esc(h.fxp)} · ${esc(h.cross)} mm² · ${dosesInHose(p,h.id).length} Dosen</small></div>`;dosesInHose(p,h.id).forEach(d=>{html+=`<div class="nav indent2 ${selected.doseId===d.id?"active":""}" onclick="choose('dose','${esc(r)}','${h.id}','${d.id}')">▣ ${esc(d.name)}<small>${esc(d.devices.join(", "))}</small></div>`});html+=`<div class="nav indent2" onclick="choose('addDose','${esc(r)}','${h.id}')">➕ Dose hinzufügen</div>`});html+=`<div class="nav indent1" onclick="choose('addHose','${esc(r)}')">➕ Schlauch hinzufügen</div>`});html+=`<div class="nav" onclick="choose('addRoom')">➕ Raum hinzufügen</div>`;tree.innerHTML=html}
-function renderEdit(){let p=current(),c=editContent;if(selected.type==="project"){editTitle.textContent="Projekt";editHelp.innerHTML="Schritt 1: Projekt benennen, dann Raum anlegen oder auswählen.";c.innerHTML=`<label>Projektname</label><input id="projectName" value="${esc(p.name)}"><button onclick="saveProjectForm()">Projekt speichern</button><button class="secondary" onclick="choose('addRoom')">+ Raum hinzufügen</button>`}else if(selected.type==="room"){editTitle.textContent="Raum: "+selected.room;editHelp.innerHTML="Schritt 2: Schlauch im Raum auswählen oder neu anlegen.";c.innerHTML=`<button onclick="choose('addHose','${esc(selected.room)}')">+ Schlauch hinzufügen</button>`}else if(selected.type==="addRoom"){editTitle.textContent="Raum hinzufügen";editHelp.innerHTML="Gib einen Raum ein, danach wird automatisch ein Schlauch vorbereitet.";c.innerHTML=`<label>Raumname</label><input id="newRoomName" placeholder="z. B. Büro"><button onclick="addRoom()">Raum speichern</button>`}else if(selected.type==="addHose"){editTitle.textContent="Schlauch hinzufügen";editHelp.innerHTML="Schritt 3: FXP und Querschnitt auswählen.";c.innerHTML=hoseForm(null,selected.room)}else if(selected.type==="hose"){let h=p.hoses.find(x=>x.id===selected.hoseId);editTitle.textContent=h.room+" · "+h.name;editHelp.innerHTML="Schritt 4: Dose in diesem Schlauch anlegen oder Schlauchdaten ändern.";c.innerHTML=hoseForm(h,h.room)+`<button onclick="choose('addDose','${esc(h.room)}','${h.id}')">+ Dose hinzufügen</button>`}else if(selected.type==="addDose"){let h=p.hoses.find(x=>x.id===selected.hoseId);editTitle.textContent="Dose hinzufügen";editHelp.innerHTML="Geräte anhaken und speichern. Danach kannst du direkt die nächste Dose anlegen.";c.innerHTML=doseForm(null,h)}else if(selected.type==="dose"){let d=p.doses.find(x=>x.id===selected.doseId),h=p.hoses.find(x=>x.id===d.hoseId);editTitle.textContent="Dose bearbeiten: "+d.name;editHelp.innerHTML="Hier kannst du Geräte, Namen oder Schlauch ändern.";c.innerHTML=doseForm(d,h)}}
+function renderTree(){let p=current();projectSelect.innerHTML=db.projects.map(pr=>`<option value="${pr.id}" ${pr.id===p.id?"selected":""}>${esc(pr.name)}</option>`).join("");treeProject.innerHTML=`<div class="nav ${selected.type==="project"?"active":""}" onclick="choose('project')">📁 ${esc(p.name)}<span class="badge">${p.doses.length}</span></div>`;let html="";p.rooms.forEach(r=>{html+=`<div class="nav ${selected.type==="room"&&selected.room===r?"active":""}" onclick="choose('room','${esc(r)}')">🏠 ${esc(r)}<span class="badge">${p.doses.filter(d=>d.room===r).length}</span></div>`;hosesInRoom(p,r).forEach(h=>{html+=`<div class="nav indent1 ${selected.hoseId===h.id?"active":""}" onclick="choose('hose','${esc(r)}','${h.id}')">📦 ${esc(h.name)}<small>FXP ${esc(h.fxp)} · ${esc(h.cross)} mm² · ${dosesInHose(p,h.id).length} Dosen</small></div>`;dosesInHose(p,h.id).forEach(d=>{html+=`<div class="nav indent2 ${selected.doseId===d.id?"active":""}" onclick="choose('dose','${esc(r)}','${h.id}','${d.id}')">▣ ${esc(d.name)}<small>${esc(d.devices.join(", "))}${d.lightGroup?" · "+esc(d.lightGroup):""}</small></div>`});html+=`<div class="nav indent2" onclick="choose('addDose','${esc(r)}','${h.id}')">➕ Dose hinzufügen</div>`});html+=`<div class="nav indent1" onclick="choose('addHose','${esc(r)}')">➕ Schlauch hinzufügen</div>`});html+=`<div class="nav" onclick="choose('addRoom')">➕ Raum hinzufügen</div>`;tree.innerHTML=html}
+function renderEdit(){let p=current(),c=editContent;if(selected.type==="project"){editTitle.textContent="Projekt";editHelp.innerHTML="Schritt 1: Projekt benennen, dann Raum anlegen oder auswählen.";c.innerHTML=`<label>Projektname</label><input id="projectName" value="${esc(p.name)}"><button onclick="saveProjectForm()">Projekt speichern</button><button class="secondary" onclick="choose('addRoom')">+ Raum hinzufügen</button><div class="muted" style="margin-top:12px">Lichtkreise: ${esc((p.lightGroups||[]).join(", "))}</div>`}else if(selected.type==="room"){editTitle.textContent="Raum: "+selected.room;editHelp.innerHTML="Schritt 2: Schlauch im Raum auswählen oder neu anlegen.";c.innerHTML=`<button onclick="choose('addHose','${esc(selected.room)}')">+ Schlauch hinzufügen</button>`}else if(selected.type==="addRoom"){editTitle.textContent="Raum hinzufügen";editHelp.innerHTML="Gib einen Raum ein, danach wird automatisch ein Schlauch vorbereitet.";c.innerHTML=`<label>Raumname</label><input id="newRoomName" placeholder="z. B. Büro"><button onclick="addRoom()">Raum speichern</button>`}else if(selected.type==="addHose"){editTitle.textContent="Schlauch hinzufügen";editHelp.innerHTML="Schritt 3: FXP und Querschnitt auswählen.";c.innerHTML=hoseForm(null,selected.room)}else if(selected.type==="hose"){let h=p.hoses.find(x=>x.id===selected.hoseId);editTitle.textContent=h.room+" · "+h.name;editHelp.innerHTML="Schritt 4: Dose in diesem Schlauch anlegen oder Schlauchdaten ändern.";c.innerHTML=hoseForm(h,h.room)+`<button onclick="choose('addDose','${esc(h.room)}','${h.id}')">+ Dose hinzufügen</button>`}else if(selected.type==="addDose"){let h=p.hoses.find(x=>x.id===selected.hoseId);editTitle.textContent="Dose hinzufügen";editHelp.innerHTML="Geräte anhaken und speichern. Danach kannst du direkt die nächste Dose anlegen.";c.innerHTML=doseForm(null,h)}else if(selected.type==="dose"){let d=p.doses.find(x=>x.id===selected.doseId),h=p.hoses.find(x=>x.id===d.hoseId);editTitle.textContent="Dose bearbeiten: "+d.name;editHelp.innerHTML="Hier kannst du Geräte, Namen oder Schlauch ändern.";c.innerHTML=doseForm(d,h)}}
 function hoseForm(h,room){let isNew=!h;return `<label>Name</label><input id="hoseName" value="${esc(h?.name||"Schlauch "+(hosesInRoom(current(),room).length+1))}"><div class="grid"><div><label>FXP</label><select id="hoseFxp"><option ${h?.fxp==="16"?"selected":""}>16</option><option ${!h||h.fxp==="20"?"selected":""}>20</option><option ${h?.fxp==="25"?"selected":""}>25</option><option ${h?.fxp==="32"?"selected":""}>32</option></select></div><div><label>Querschnitt</label><select id="hoseCross"><option ${!h||h.cross==="1,5"?"selected":""}>1,5</option><option ${h?.cross==="2,5"?"selected":""}>2,5</option></select></div></div><button onclick="${isNew?`saveNewHose('${esc(room)}')`:`saveHoseForm('${h.id}')`}">${isNew?"Schlauch speichern":"Schlauch speichern"}</button>${h?`<button class="danger" onclick="deleteHose('${h.id}')">Schlauch löschen</button>`:""}`}
 function saveNewHose(room){let h=addHose(room,false);h.name=hoseName.value;h.fxp=hoseFxp.value;h.cross=hoseCross.value;choose("hose",room,h.id)}
-function doseForm(d,h){let p=current();let hoseOpts=p.hoses.map(x=>`<option value="${x.id}" ${x.id===(d?.hoseId||h.id)?"selected":""}>${esc(x.room)} · ${esc(x.name)} · FXP ${esc(x.fxp)} · ${esc(x.cross)} mm²</option>`).join("");return `<div class="grid"><div><label>Dosenname</label><input id="doseName" value="${esc(d?.name||nextDoseName(h.room))}"></div><div><label>Schlauch</label><select id="doseHose">${hoseOpts}</select></div></div><label>Dosenart</label><select id="doseType"><option>1-fach Dose</option><option>2-fach Dose</option><option>3-fach Dose</option><option>Lampenauslass</option><option>Netzwerkdose</option></select><label>Geräte</label>${deviceChecks(d?.devices||[])}<button onclick="saveDoseForm(${d?`'${d.id}'`:"null"})">Dose speichern</button>${d?`<button class="danger" onclick="deleteDose('${d.id}')">Dose löschen</button>`:""}`}
+function doseForm(d,h){let p=current();let hoseOpts=p.hoses.map(x=>`<option value="${x.id}" ${x.id===(d?.hoseId||h.id)?"selected":""}>${esc(x.room)} · ${esc(x.name)} · FXP ${esc(x.fxp)} · ${esc(x.cross)} mm²</option>`).join("");return `<div class="grid"><div><label>Dosenname</label><input id="doseName" value="${esc(d?.name||nextDoseName(h.room))}"></div><div><label>Schlauch</label><select id="doseHose">${hoseOpts}</select></div></div><label>Dosenart</label><select id="doseType"><option>1-fach Dose</option><option>2-fach Dose</option><option>3-fach Dose</option><option>Lampenauslass</option><option>Netzwerkdose</option></select>${lightGroupField(d)}<label>Geräte</label>${deviceChecks(d?.devices||[])}<button onclick="saveDoseForm(${d?`'${d.id}'`:"null"})">Dose speichern</button>${d?`<button class="danger" onclick="deleteDose('${d.id}')">Dose löschen</button>`:""}`}
 function renderCalc(){let groups=calcAll();calcList.innerHTML=groups.map(g=>!g.doses.length?"":`<h3>${esc(g.hose.room)} · ${esc(g.hose.name)} · FXP ${esc(g.hose.fxp)} · ${esc(g.hose.cross)} mm²</h3>`+g.calc.map((w,i)=>`<div class="item"><div class="name">${i===0?"Verteiler":esc(g.doses[i-1].name)} → ${esc(g.doses[i].name)}</div><b>${eCount(w)} Einzeldrähte</b>${w.some(x=>x.includes("Netzwerk"))?" + LAN":""}<div class="muted">${suggest(w,g.hose)}</div>${w.map(wireHTML).join("")}</div>`).join("")).join("")||"<div class='muted'>Noch keine Dosen.</div>"}
 function switchedOutputsForHose(ds){let hasSeries=ds.find(d=>has(d,"Serienschalter"));if(hasSeries)return [{dose:hasSeries,label:"L1 geschaltet"},{dose:hasSeries,label:"L2 geschaltet"}];let chain=ds.filter(d=>has(d,"Wechselschalter")||has(d,"Kreuzschalter"));if(chain.some(d=>has(d,"Wechselschalter")))return [{dose:chain.filter(d=>has(d,"Wechselschalter")).slice(-1)[0],label:"L geschaltet"}];let sw=ds.find(d=>has(d,"Schalter"));return sw?[{dose:sw,label:"L geschaltet"}]:[]}
-function renderKlemmen(){let rows="",nr=1;calcAll().forEach(g=>switchedOutputsForHose(g.doses).forEach(o=>{rows+=`<tr><td>X${nr++}</td><td>${esc(o.dose.room)}</td><td>${esc(g.hose.name)}</td><td>${esc(o.dose.name)}</td><td>${o.label}</td></tr>`}));klemmenList.innerHTML=rows?`<table><tr><th>Klemme</th><th>Raum</th><th>Schlauch</th><th>Dose</th><th>Funktion</th></tr>${rows}</table><h3>Gesamt: ${nr-1} Reihenklemmen</h3>`:"<div class='muted'>Keine geschalteten Leiter erkannt.</div>"}
+function renderKlemmen(){
+  let p=current(), rows="", nr=1, groups={};
+  p.doses.forEach(d=>{
+    if(!usesLight(d.devices))return;
+    let g=d.lightGroup || (d.room+" Licht");
+    if(!groups[g])groups[g]={name:g, switches:[], series:[], lamps:[]};
+    if(has(d,"Schalter")||has(d,"Wechselschalter")||has(d,"Kreuzschalter"))groups[g].switches.push(d);
+    if(has(d,"Serienschalter"))groups[g].series.push(d);
+    if(has(d,"Lampe"))groups[g].lamps.push(d);
+  });
+  Object.values(groups).forEach(g=>{
+    if(g.series.length){
+      g.series.forEach(d=>{
+        rows+=`<tr><td>X${nr++}</td><td>${esc(g.name)}</td><td>${esc(d.room)}</td><td>${esc(d.name)}</td><td>L1 geschaltet</td></tr>`;
+        rows+=`<tr><td>X${nr++}</td><td>${esc(g.name)}</td><td>${esc(d.room)}</td><td>${esc(d.name)}</td><td>L2 geschaltet</td></tr>`;
+      });
+    }else if(g.switches.length){
+      let d=g.switches[g.switches.length-1];
+      rows+=`<tr><td>X${nr++}</td><td>${esc(g.name)}</td><td>${esc(d.room)}</td><td>${esc(d.name)}</td><td>L geschaltet von letztem Schalter</td></tr>`;
+    }
+  });
+  klemmenList.innerHTML=rows?`<table><tr><th>Klemme</th><th>Lichtkreis</th><th>Raum</th><th>Schalter/Dose</th><th>Funktion</th></tr>${rows}</table><h3>Gesamt: ${nr-1} Reihenklemmen</h3>`:"<div class='muted'>Keine geschalteten Leiter erkannt.</div>";
+}
 function renderMaterial(){let counts={},fxp={},wireCross={},net=0,total=0;current().doses.forEach(d=>d.devices.forEach(v=>counts[v]=(counts[v]||0)+1));calcAll().forEach(g=>{if(g.doses.length)fxp[g.hose.fxp]=(fxp[g.hose.fxp]||0)+1;g.calc.forEach(w=>{w.filter(x=>!x.includes("Netzwerk")).forEach(x=>{let q=x.includes("2,5")?"2,5":g.hose.cross;wireCross[q]=(wireCross[q]||0)+1;total++});if(w.some(x=>x.includes("Netzwerk")))net++})});materialList.innerHTML=`<h3>Geräte</h3>${Object.entries(counts).map(([k,v])=>`<div>${v} × ${esc(k)}</div>`).join("")||"Keine Geräte"}<h3>FXP</h3>${Object.entries(fxp).map(([k,v])=>`<div>${v} × FXP ${k}</div>`).join("")}<h3>Einzeldrähte</h3>${Object.entries(wireCross).map(([k,v])=>`<div>${v} × ${k} mm²</div>`).join("")}<div>Gesamt: ${total}</div>${net?`<div>${net} × Netzwerkkabel</div>`:""}`}
-function renderGuide(){let p=current();let msg="Projekt benennen und Raum auswählen.";if(selected.type==="project")msg="Weiter: Raum hinzufügen oder bestehenden Raum links auswählen.";if(selected.type==="room")msg="Weiter: Schlauch hinzufügen oder auswählen.";if(selected.type==="hose")msg="Weiter: Dose hinzufügen.";if(selected.type==="dose")msg="Dose bearbeiten und speichern.";guideBox.innerHTML=msg}
+function renderGuide(){let p=current();let msg="Projekt benennen und Raum auswählen.";if(selected.type==="project")msg="Weiter: Raum hinzufügen oder bestehenden Raum links auswählen.";if(selected.type==="room")msg="Weiter: Schlauch hinzufügen oder auswählen.";if(selected.type==="hose")msg="Weiter: Dose hinzufügen.";if(selected.type==="dose")msg="Dose bearbeiten, bei Schalter/Lampe den richtigen Lichtkreis wählen und speichern.";guideBox.innerHTML=msg}
 function renderAll(){let p=current();migrate(p);renderTree();renderEdit();renderCalc();renderKlemmen();renderMaterial();renderGuide();footerStats.textContent=`Räume: ${p.rooms.length} · Schläuche: ${p.hoses.length} · Dosen: ${p.doses.length}`}
 ensure();renderAll();show("Edit");
 </script>
