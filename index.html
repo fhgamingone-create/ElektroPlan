@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ElektroPlan V10.1</title>
+<title>ElektroPlan V10.2</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -27,7 +27,7 @@ button.danger{background:#ef4444}.green{background:#16a34a}
 .item{border:1px solid #e5e7eb;background:#fbfcfe;border-radius:14px;padding:12px;margin:9px 0}.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .name{font-weight:900;font-size:17px}.pill{display:inline-block;background:#eaf4ff;color:#075985;border-radius:999px;padding:4px 9px;margin:4px 4px 0 0;font-size:12px;font-weight:800}
 .nav{border-radius:12px;padding:9px;margin:4px 0;cursor:pointer}.nav:hover,.nav.active{background:#eaf3ff;color:#0066e6;font-weight:900}.nav small{display:block;color:#667085;font-weight:500}.indent1{margin-left:12px}.indent2{margin-left:28px}
-.badge{float:right;background:#f2f4f7;border:1px solid #e5e7eb;border-radius:999px;padding:2px 8px;color:#475467;font-size:12px}
+.badge{float:right;background:#f2f4f7;border:1px solid #e5e7eb;border-radius:999px;padding:2px 8px;color:#475467;font-size:12px}.free{color:#16a34a;font-weight:900}.used{color:#dc2626;font-weight:900}
 table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align:top}
 .notice{background:#fff7ed;color:#9a3412;border-radius:12px;padding:11px;font-size:13px;line-height:1.4}.ok{background:#ecfdf3;color:#166534;border-radius:12px;padding:11px;font-size:13px}
 .wire{display:flex;align-items:center;gap:8px;margin:6px 0}.dot{width:18px;height:18px;border-radius:50%;border:1px solid #333}.brown{background:#7b3f00}.blue{background:#0074d9}.black{background:#111}.grey{background:#999}.orange{background:#f59e0b}.yellowgreen{background:linear-gradient(90deg,green 50%,yellow 50%)}.purple{background:#7e22ce}
@@ -39,7 +39,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px
 <body>
 <div class="app">
 <aside class="sidebar">
-<h1>⚡ ElektroPlan <span class="ver">V10.1</span></h1>
+<h1>⚡ ElektroPlan <span class="ver">V10.2</span></h1>
 <div class="sectionTitle">Projekt</div>
 <div id="treeProject"></div>
 <button onclick="newProject()">+ Projekt</button>
@@ -51,7 +51,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px
 
 <main class="main">
 <div class="topbar">
-  <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted">Version 10.1</span></div>
+  <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted">Version 10.2</span></div>
   <div style="display:flex;gap:8px"><button class="secondary" onclick="exportProject()" style="width:auto">Export</button><button class="secondary" onclick="document.getElementById('importFile').click()" style="width:auto">Import</button><button onclick="window.print()" style="width:auto">PDF/Drucken</button><input id="importFile" class="hidden" type="file" accept=".json" onchange="importProject(event)"></div>
 </div>
 
@@ -88,7 +88,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px
 <div class="footer"><span>✅ Automatisch gespeichert</span><span id="footerStats"></span></div>
 
 <script>
-const KEY="elektroplan_v101";
+const KEY="elektroplan_v102";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 let db=loadDB(), currentId=null, selected={type:"project",room:null,hoseId:null,doseId:null}, activeTab="Edit";
@@ -172,10 +172,85 @@ function eCount(w){return w.filter(x=>!x.includes("Netzwerk")).length}
 function suggest(w,h){let net=w.some(x=>x.includes("Netzwerk")),has25=w.some(x=>x.includes("2,5"));let q=has25?"2,5":(h.cross||"1,5");let base=`${eCount(w)} Einzeldrähte ${q} mm² im FXP ${h.fxp}`;return net?base+" + 1× Netzwerkkabel":base}
 function wireColor(w){if(w==="PE"||w.includes("PE"))return"yellowgreen";if(w.includes("N "))return"blue";if(w.includes("Steckdose"))return"brown";if(w.includes("K2"))return"grey";if(w.includes("Netzwerk"))return"purple";return"black"}
 function wireHTML(w){return `<div class="wire"><span class="dot ${wireColor(w)}"></span>${esc(w)}</div>`}
-function renderTree(){let p=current();projectSelect.innerHTML=db.projects.map(pr=>`<option value="${pr.id}" ${pr.id===p.id?"selected":""}>${esc(pr.name)}</option>`).join("");treeProject.innerHTML=`<div class="nav ${selected.type==="project"?"active":""}" onclick="choose('project')">📁 ${esc(p.name)}<span class="badge">${p.doses.length}</span></div>`;let html="";p.rooms.forEach(r=>{html+=`<div class="nav ${selected.type==="room"&&selected.room===r?"active":""}" onclick="choose('room','${esc(r)}')">🏠 ${esc(r)}<span class="badge">${p.doses.filter(d=>d.room===r).length}</span></div>`;hosesInRoom(p,r).forEach(h=>{html+=`<div class="nav indent1 ${selected.hoseId===h.id?"active":""}" onclick="choose('hose','${esc(r)}','${h.id}')">📦 ${esc(h.name)}<small>FXP ${esc(h.fxp)} · ${esc(h.cross)} mm² · ${dosesInHose(p,h.id).length} Dosen</small></div>`;dosesInHose(p,h.id).forEach(d=>{html+=`<div class="nav indent2 ${selected.doseId===d.id?"active":""}" onclick="choose('dose','${esc(r)}','${h.id}','${d.id}')">▣ ${esc(d.name)}<small>${esc(d.devices.join(", "))}${d.lightGroup?" · "+esc(d.lightGroup):""}</small></div>`});html+=`<div class="nav indent2" onclick="choose('addDose','${esc(r)}','${h.id}')">➕ Dose hinzufügen</div>`});html+=`<div class="nav indent1" onclick="choose('addHose','${esc(r)}')">➕ Schlauch hinzufügen</div>`});html+=`<div class="nav" onclick="choose('addRoom')">➕ Raum hinzufügen</div>`;tree.innerHTML=html}
+function renderTree(){let p=current();projectSelect.innerHTML=db.projects.map(pr=>`<option value="${pr.id}" ${pr.id===p.id?"selected":""}>${esc(pr.name)}</option>`).join("");treeProject.innerHTML=`<div class="nav ${selected.type==="project"?"active":""}" onclick="choose('project')">📁 ${esc(p.name)}<span class="badge">${p.doses.length}</span></div>`;let html="";p.rooms.forEach(r=>{html+=`<div class="nav ${selected.type==="room"&&selected.room===r?"active":""}" onclick="choose('room','${esc(r)}')">🏠 ${esc(r)}<span class="badge">${p.doses.filter(d=>d.room===r).length}</span></div>`;hosesInRoom(p,r).forEach(h=>{html+=`<div class="nav indent1 ${selected.hoseId===h.id?"active":""}" onclick="choose('hose','${esc(r)}','${h.id}')">📦 ${esc(h.name)}<small>FXP ${esc(h.fxp)} · ${esc(h.cross)} mm² · ${dosesInHose(p,h.id).length?dosesInHose(p,h.id).length+" Dosen":"leer"}</small></div>`;dosesInHose(p,h.id).forEach(d=>{html+=`<div class="nav indent2 ${selected.doseId===d.id?"active":""}" onclick="choose('dose','${esc(r)}','${h.id}','${d.id}')">▣ ${esc(d.name)}<small>${esc(d.devices.join(", "))}${d.lightGroup?" · "+esc(d.lightGroup):""}</small></div>`});html+=`<div class="nav indent2" onclick="choose('addDose','${esc(r)}','${h.id}')">➕ Dose hinzufügen</div>`});html+=`<div class="nav indent1" onclick="choose('addHose','${esc(r)}')">➕ Schlauch hinzufügen</div>`});html+=`<div class="nav" onclick="choose('addRoom')">➕ Raum hinzufügen</div>`;tree.innerHTML=html}
 function renderEdit(){let p=current(),c=editContent;if(selected.type==="project"){editTitle.textContent="Projekt";editHelp.innerHTML="Schritt 1: Projekt benennen, dann Raum anlegen oder auswählen.";c.innerHTML=`<label>Projektname</label><input id="projectName" value="${esc(p.name)}"><button onclick="saveProjectForm()">Projekt speichern</button><button class="secondary" onclick="choose('addRoom')">+ Raum hinzufügen</button><div class="muted" style="margin-top:12px">Lichtkreise: ${esc((p.lightGroups||[]).join(", "))}</div>`}else if(selected.type==="room"){editTitle.textContent="Raum: "+selected.room;editHelp.innerHTML="Schritt 2: Schlauch im Raum auswählen oder neu anlegen.";c.innerHTML=`<button onclick="choose('addHose','${esc(selected.room)}')">+ Schlauch hinzufügen</button>`}else if(selected.type==="addRoom"){editTitle.textContent="Raum hinzufügen";editHelp.innerHTML="Gib einen Raum ein, danach wird automatisch ein Schlauch vorbereitet.";c.innerHTML=`<label>Raumname</label><input id="newRoomName" placeholder="z. B. Büro"><button onclick="addRoom()">Raum speichern</button>`}else if(selected.type==="addHose"){editTitle.textContent="Schlauch hinzufügen";editHelp.innerHTML="Schritt 3: FXP und Querschnitt auswählen.";c.innerHTML=hoseForm(null,selected.room)}else if(selected.type==="hose"){let h=p.hoses.find(x=>x.id===selected.hoseId);editTitle.textContent=h.room+" · "+h.name;editHelp.innerHTML="Schritt 4: Dose in diesem Schlauch anlegen oder Schlauchdaten ändern.";c.innerHTML=hoseForm(h,h.room)+`<button onclick="choose('addDose','${esc(h.room)}','${h.id}')">+ Dose hinzufügen</button>`}else if(selected.type==="addDose"){let h=p.hoses.find(x=>x.id===selected.hoseId);editTitle.textContent="Dose hinzufügen";editHelp.innerHTML="Geräte anhaken und speichern. Danach kannst du direkt die nächste Dose anlegen.";c.innerHTML=doseForm(null,h)}else if(selected.type==="dose"){let d=p.doses.find(x=>x.id===selected.doseId),h=p.hoses.find(x=>x.id===d.hoseId);editTitle.textContent="Dose bearbeiten: "+d.name;editHelp.innerHTML="Hier kannst du Geräte, Namen oder Schlauch ändern.";c.innerHTML=doseForm(d,h)}}
-function hoseForm(h,room){let isNew=!h;return `<label>Name</label><input id="hoseName" value="${esc(h?.name||"Schlauch "+(hosesInRoom(current(),room).length+1))}"><div class="grid"><div><label>FXP</label><select id="hoseFxp"><option ${h?.fxp==="16"?"selected":""}>16</option><option ${!h||h.fxp==="20"?"selected":""}>20</option><option ${h?.fxp==="25"?"selected":""}>25</option><option ${h?.fxp==="32"?"selected":""}>32</option></select></div><div><label>Querschnitt</label><select id="hoseCross"><option ${!h||h.cross==="1,5"?"selected":""}>1,5</option><option ${h?.cross==="2,5"?"selected":""}>2,5</option></select></div></div><button onclick="${isNew?`saveNewHose('${esc(room)}')`:`saveHoseForm('${h.id}')`}">${isNew?"Schlauch speichern":"Schlauch speichern"}</button>${h?`<button class="danger" onclick="deleteHose('${h.id}')">Schlauch löschen</button>`:""}`}
-function saveNewHose(room){let h=addHose(room,false);h.name=hoseName.value;h.fxp=hoseFxp.value;h.cross=hoseCross.value;choose("hose",room,h.id)}
+
+function hoseChoiceNumber(room){
+  const used=new Set(hosesInRoom(current(),room).map(h=>num(h.name)));
+  for(let i=1;i<=20;i++)if(!used.has(i))return i;
+  return 20;
+}
+function hoseChoiceOptions(room,selectedNum=0){
+  const p=current();
+  const hs=hosesInRoom(p,room);
+  let out="";
+  for(let i=1;i<=20;i++){
+    const existing=hs.find(h=>num(h.name)===i);
+    const label=existing?`🔴 Schlauch ${i} vorhanden (${dosesInHose(p,existing.id).length} Dosen)`:`🟢 Schlauch ${i} frei`;
+    out+=`<option value="${i}" ${i===selectedNum?"selected":""}>${label}</option>`;
+  }
+  return out;
+}
+function hoseChoiceChanged(room){
+  const p=current();
+  const n=parseInt(document.getElementById("hoseChoice").value,10);
+  const existing=hosesInRoom(p,room).find(h=>num(h.name)===n);
+  const info=document.getElementById("hoseChoiceInfo");
+  if(existing){
+    info.innerHTML=`<span class="used">✖ Schlauch ${n} ist bereits vorhanden.</span><br>${dosesInHose(p,existing.id).length} Dosen in diesem Schlauch.`;
+    document.getElementById("openExistingHoseBtn").classList.remove("hidden");
+    document.getElementById("saveHoseBtn").classList.add("hidden");
+    document.getElementById("hoseName").value=existing.name;
+    document.getElementById("hoseFxp").value=existing.fxp||"20";
+    document.getElementById("hoseCross").value=existing.cross||"1,5";
+  }else{
+    info.innerHTML=`<span class="free">✓ Schlauch ${n} ist frei.</span>`;
+    document.getElementById("openExistingHoseBtn").classList.add("hidden");
+    document.getElementById("saveHoseBtn").classList.remove("hidden");
+    document.getElementById("hoseName").value="Schlauch "+n;
+  }
+}
+function openExistingHose(room){
+  const n=parseInt(document.getElementById("hoseChoice").value,10);
+  const h=hosesInRoom(current(),room).find(h=>num(h.name)===n);
+  if(h)choose("hose",room,h.id);
+}
+function hoseForm(h,room){
+  let isNew=!h;
+  let selectedNum=isNew?hoseChoiceNumber(room):num(h.name);
+  let name=isNew?("Schlauch "+selectedNum):h.name;
+  return `${isNew?`
+  <label>Schlauch auswählen</label>
+  <select id="hoseChoice" onchange="hoseChoiceChanged('${esc(room)}')">${hoseChoiceOptions(room,selectedNum)}</select>
+  <div id="hoseChoiceInfo" class="ok" style="margin-top:8px"><span class="free">✓ Schlauch ${selectedNum} ist frei.</span></div>
+  <button id="openExistingHoseBtn" class="secondary hidden" onclick="openExistingHose('${esc(room)}')">Vorhandenen Schlauch öffnen</button>`:""}
+  <label>Name</label>
+  <input id="hoseName" value="${esc(name)}" ${isNew?"readonly":""}>
+  <div class="grid">
+    <div><label>FXP</label><select id="hoseFxp">
+      <option ${h?.fxp==="16"?"selected":""}>16</option>
+      <option ${!h||h.fxp==="20"?"selected":""}>20</option>
+      <option ${h?.fxp==="25"?"selected":""}>25</option>
+      <option ${h?.fxp==="32"?"selected":""}>32</option>
+    </select></div>
+    <div><label>Querschnitt</label><select id="hoseCross">
+      <option ${!h||h.cross==="1,5"?"selected":""}>1,5</option>
+      <option ${h?.cross==="2,5"?"selected":""}>2,5</option>
+    </select></div>
+  </div>
+  <button id="saveHoseBtn" onclick="${isNew?`saveNewHose('${esc(room)}')`:`saveHoseForm('${h.id}')`}">${isNew?"Schlauch speichern":"Schlauch speichern"}</button>
+  ${h?`<button class="danger" onclick="deleteHose('${h.id}')">Schlauch löschen</button>`:""}`;
+}
+function saveNewHose(room){
+  const n=parseInt(document.getElementById("hoseChoice")?.value||hoseChoiceNumber(room),10);
+  const existing=hosesInRoom(current(),room).find(h=>num(h.name)===n);
+  if(existing){choose("hose",room,existing.id);return}
+  let h=addHose(room,false);
+  h.name="Schlauch "+n;
+  h.fxp=hoseFxp.value;
+  h.cross=hoseCross.value;
+  choose("hose",room,h.id)
+}
 function doseForm(d,h){let p=current();let hoseOpts=p.hoses.map(x=>`<option value="${x.id}" ${x.id===(d?.hoseId||h.id)?"selected":""}>${esc(x.room)} · ${esc(x.name)} · FXP ${esc(x.fxp)} · ${esc(x.cross)} mm²</option>`).join("");return `<div class="grid"><div><label>Dosenname</label><input id="doseName" value="${esc(d?.name||nextDoseName(h.room))}"></div><div><label>Schlauch</label><select id="doseHose">${hoseOpts}</select></div></div><label>Dosenart</label><select id="doseType"><option>1-fach Dose</option><option>2-fach Dose</option><option>3-fach Dose</option><option>Lampenauslass</option><option>Netzwerkdose</option></select>${lightGroupField(d)}<label>Geräte</label>${deviceChecks(d?.devices||[])}<button onclick="saveDoseForm(${d?`'${d.id}'`:"null"})">Dose speichern</button>${d?`<button class="danger" onclick="deleteDose('${d.id}')">Dose löschen</button>`:""}`}
 function renderCalc(){let groups=calcAll();calcList.innerHTML=groups.map(g=>!g.doses.length?"":`<h3>${esc(g.hose.room)} · ${esc(g.hose.name)} · FXP ${esc(g.hose.fxp)} · ${esc(g.hose.cross)} mm²</h3>`+g.calc.map((w,i)=>`<div class="item"><div class="name">${i===0?"Verteiler":esc(g.doses[i-1].name)} → ${esc(g.doses[i].name)}</div><b>${eCount(w)} Einzeldrähte</b>${w.some(x=>x.includes("Netzwerk"))?" + LAN":""}<div class="muted">${suggest(w,g.hose)}</div>${w.map(wireHTML).join("")}</div>`).join("")).join("")||"<div class='muted'>Noch keine Dosen.</div>"}
 function switchedOutputsForHose(ds){let hasSeries=ds.find(d=>has(d,"Serienschalter"));if(hasSeries)return [{dose:hasSeries,label:"L1 geschaltet"},{dose:hasSeries,label:"L2 geschaltet"}];let chain=ds.filter(d=>has(d,"Wechselschalter")||has(d,"Kreuzschalter"));if(chain.some(d=>has(d,"Wechselschalter")))return [{dose:chain.filter(d=>has(d,"Wechselschalter")).slice(-1)[0],label:"L geschaltet"}];let sw=ds.find(d=>has(d,"Schalter"));return sw?[{dose:sw,label:"L geschaltet"}]:[]}
