@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ElektroPlan V8.0</title>
+<title>ElektroPlan V9.0</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -71,7 +71,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 <body>
 <div class="app">
 <aside class="sidebar">
-  <h1>⚡ ElektroPlan <span class="ver">V8.0</span></h1>
+  <h1>⚡ ElektroPlan <span class="ver">V9.0</span></h1>
   <div class="sectionTitle">Projekte</div>
   <div id="projectList"></div>
   <button onclick="createProject()">+ Neues Projekt</button>
@@ -94,7 +94,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 
 <main class="main">
   <div class="topbar">
-    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted" style="margin-left:8px">Version 8.0</span></div>
+    <div><b>Projekt:</b> <select id="projectSelect" onchange="openProject(this.value)" style="width:220px;display:inline-block"></select> <span class="muted" style="margin-left:8px">Version 9.0</span></div>
     <div style="display:flex;gap:8px">
       <button class="secondary" onclick="exportProject()" style="width:auto">Export</button><button class="secondary" onclick="document.getElementById('importFileTop').click()" style="width:auto">Import</button>
       <button onclick="window.print()" style="width:auto">PDF/Drucken</button>
@@ -102,11 +102,23 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
   </div>
 
   <div class="tabs">
+    <button id="bWizard" onclick="show('Wizard')">Assistent</button>
     <button id="bOverview" onclick="show('Overview')">Übersicht</button>
     <button id="bDoses" onclick="show('Doses')">Dosen</button>
     <button id="bCalc" onclick="show('Calc')">Berechnung</button>
+    <button id="bKlemmen" onclick="show('Klemmen')">Klemmen</button>
     <button id="bMaterial" onclick="show('Material')">Material</button>
   </div>
+
+
+  <section id="tabWizard">
+    <div class="card"><h2>Geführte Eingabe</h2><div class="notice">Projekt → Raum → Schlauch → Dose → Auswertung</div><div id="wizardSteps" style="display:flex;gap:8px;overflow:auto;margin-top:12px"></div></div>
+    <div class="card wizardPage" id="wiz1"><h2>① Projekt</h2><label>Projektname</label><input id="wizProjectName"><button onclick="wizardSaveProject()">Weiter</button></div>
+    <div class="card wizardPage hidden" id="wiz2"><h2>② Raum</h2><label>Raum auswählen</label><select id="wizRoomSelect"></select><label>Oder neuer Raum</label><input id="wizNewRoom"><button onclick="wizardSaveRoom()">Weiter</button><button class="secondary" onclick="wizardStep=1;renderWizard()">Zurück</button></div>
+    <div class="card wizardPage hidden" id="wiz3"><h2>③ Schlauch</h2><label>Schlauch auswählen</label><select id="wizHoseSelect"></select><div class="grid"><div><label>FXP</label><select id="wizFxp"><option>16</option><option selected>20</option><option>25</option><option>32</option></select></div><div><label>Querschnitt</label><select id="wizCross"><option selected>1,5</option><option>2,5</option></select></div></div><button onclick="wizardUseHose()">Weiter</button><button class="secondary" onclick="wizardNewHose()">+ Neuer Schlauch</button><button class="secondary" onclick="wizardStep=2;renderWizard()">Zurück</button></div>
+    <div class="card wizardPage hidden" id="wiz4"><h2>④ Dose</h2><div class="ok" id="wizContext"></div><div class="grid"><div><label>Dosenname</label><input id="wizDoseName"></div><div><label>Dosenart</label><select id="wizDoseType"><option>1-fach Dose</option><option>2-fach Dose</option><option>3-fach Dose</option><option>Lampenauslass</option><option>Netzwerkdose</option></select></div></div><label>Geräte</label><div class="checks" id="wizChecks"><label class="check"><input type="checkbox" value="Steckdose">Steckdose</label><label class="check"><input type="checkbox" value="Steckdose 2">zweite Steckdose</label><label class="check"><input type="checkbox" value="Schalter">Schalter</label><label class="check"><input type="checkbox" value="Serienschalter">Serienschalter</label><label class="check"><input type="checkbox" value="Wechselschalter">Wechselschalter</label><label class="check"><input type="checkbox" value="Kreuzschalter">Kreuzschalter</label><label class="check"><input type="checkbox" value="Lampe">Lampe</label><label class="check"><input type="checkbox" value="Netzwerkdose">Netzwerkdose</label><label class="check"><input type="checkbox" value="Herdanschluss">Herdanschluss 5×2,5</label><label class="check"><input type="checkbox" value="Geschirrspüler">Geschirrspüler 3×2,5</label></div><button onclick="wizardSaveDose('same')">Speichern + nächste Dose</button><button class="secondary" onclick="wizardSaveDose('hose')">Speichern + neuer Schlauch</button><button class="secondary" onclick="wizardSaveDose('room')">Speichern + neuer Raum</button><button class="green" onclick="wizardSaveDose('done')">Speichern + Auswertung</button><button class="secondary" onclick="wizardStep=3;renderWizard()">Zurück</button></div>
+    <div class="card wizardPage hidden" id="wiz5"><h2>⑤ Auswertung</h2><button onclick="show('Calc')">Berechnung</button><button class="secondary" onclick="show('Klemmen')">Reihenklemmen</button><button class="secondary" onclick="show('Material')">Material</button><button class="secondary" onclick="wizardStep=4;renderWizard()">Weitere Dose</button></div>
+  </section>
 
   <section id="tabOverview">
     <div class="card">
@@ -138,7 +150,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
       </div>
 
       <div class="ok" id="saveInfo" style="margin-top:12px"></div>
-      <div class="notice" style="margin-top:12px">V8.0: Abschnittsberechnung. Berechnet werden jetzt die Adern im Schlauch zwischen Verteiler → Dose → Dose.</div>
+      <div class="notice" style="margin-top:12px">V9.0: Geführte Eingabe und Reihenklemmen.</div>
       <div class="grid" style="margin-top:12px">
         <button class="green" onclick="exportProject()">Projekt exportieren</button>
         <button class="secondary" onclick="document.getElementById('importFileTop').click()">Projekt importieren</button>
@@ -246,6 +258,11 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
     </div>
   </section>
 
+
+  <section id="tabKlemmen" class="hidden">
+    <div class="card"><h2>Reihenklemmen</h2><div class="notice">L direkt auf Automat, N direkt am 1P+N-Automaten, PE auf PE-Schiene. Reihenklemmen nur für geschaltete Leiter.</div><div id="klemmenList"></div></div>
+  </section>
+
   <section id="tabMaterial" class="hidden">
     <div class="card">
       <h2>Material</h2>
@@ -267,7 +284,7 @@ td,th{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align
 </div>
 
 <script>
-const KEY="elektroplan_v80";
+const KEY="elektroplan_v90";
 const DEFAULT_ROOMS=["Wohnzimmer","Esszimmer","Küche","Bad","Speise","Vorraum","WC","Schlafzimmer"];
 const ROOM_CODES={"Wohnzimmer":"WZ","Esszimmer":"EZ","Küche":"KÜ","Bad":"BA","Speise":"SP","Vorraum":"VR","WC":"WC","Schlafzimmer":"SZ"};
 const FXP_SIZES=["16","20","25","32"];
@@ -578,7 +595,7 @@ function renderAll(){
   renderDoses(p);
   renderCalc();
   renderMaterial();
-  footerStats.textContent=`Dosen: ${p.doses.length} · Schläuche: ${p.hoses.length}`;
+  renderKlemmen(); renderWizard(); footerStats.textContent=`Dosen: ${p.doses.length} · Schläuche: ${p.hoses.length}`;
 }
 function renderHoses(p){
   const room=activeRoom;
@@ -719,7 +736,38 @@ function resetAllData(){
 function exportProject(){let p=current();const blob=new Blob([JSON.stringify(p,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(p.name||"elektroplan")+".json";a.click();URL.revokeObjectURL(a.href)}
 function importProject(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let p=JSON.parse(r.result);p.id=uid();migrate(p);db.projects.push(p);currentId=p.id;store()};r.readAsText(f)}
 
-ensure();renderAll();show("Overview");
+
+let wizardStep=1;
+function wizardSelected(){return Array.from(document.querySelectorAll("#wizChecks input:checked")).map(x=>x.value)}
+function renderWizard(){
+  if(!document.getElementById("wiz1"))return;
+  for(let i=1;i<=5;i++)document.getElementById("wiz"+i).classList.add("hidden");
+  document.getElementById("wiz"+wizardStep).classList.remove("hidden");
+  wizardSteps.innerHTML=["Projekt","Raum","Schlauch","Dose","Auswertung"].map((l,i)=>`<span class="pill" style="${i+1===wizardStep?'background:#007aff;color:white':''}">${i+1}. ${l}</span>`).join("");
+  let p=current(); if(!p)return;
+  wizProjectName.value=p.name||"";
+  wizRoomSelect.innerHTML=p.rooms.map(r=>`<option ${r===activeRoom?"selected":""}>${esc(r)}</option>`).join("");
+  let hs=hosesInRoom(p,activeRoom); if(!hs.length){let h=createHoseForProject(p,activeRoom,false);hs=[h];activeHoseId=h.id}
+  if(!activeHoseId||!hs.some(h=>h.id===activeHoseId))activeHoseId=hs[0].id;
+  wizHoseSelect.innerHTML=hs.map(h=>`<option value="${h.id}" ${h.id===activeHoseId?"selected":""}>${esc(h.name)} · FXP ${esc(h.fxp)} · ${esc(h.cross||"1,5")} mm²</option>`).join("");
+  let h=p.hoses.find(x=>x.id===activeHoseId); if(h){wizFxp.value=h.fxp||"20";wizCross.value=h.cross||"1,5"}
+  wizContext.innerHTML=`Raum: <b>${esc(activeRoom)}</b><br>Schlauch: <b>${esc(h?.name||"")}</b> · FXP ${esc(h?.fxp||"20")} · ${esc(h?.cross||"1,5")} mm²`;
+  if(!wizDoseName.value)wizDoseName.value=nextDoseName(activeRoom);
+}
+function wizardSaveProject(){let p=current();p.name=wizProjectName.value.trim()||"Neues Projekt";wizardStep=2;store();renderWizard()}
+function wizardSaveRoom(){let p=current();let r=wizNewRoom.value.trim()||wizRoomSelect.value;if(!p.rooms.includes(r))p.rooms.push(r);activeRoom=r;wizNewRoom.value="";let h=hosesInRoom(p,r)[0]||createHoseForProject(p,r,false);activeHoseId=h.id;wizardStep=3;store();renderWizard()}
+function wizardUseHose(){let p=current();activeHoseId=wizHoseSelect.value;let h=p.hoses.find(x=>x.id===activeHoseId);if(h){h.fxp=wizFxp.value;h.cross=wizCross.value;activeRoom=h.room}wizardStep=4;wizDoseName.value=nextDoseName(activeRoom);store();renderWizard()}
+function wizardNewHose(){let p=current();let h=createHoseForProject(p,activeRoom,false);h.fxp=wizFxp.value;h.cross=wizCross.value;activeHoseId=h.id;wizardStep=4;wizDoseName.value=nextDoseName(activeRoom);store();renderWizard()}
+function wizardSaveDose(next){let p=current(),devices=wizardSelected();if(!devices.length)return alert("Bitte Gerät auswählen.");p.doses.push({room:activeRoom,hoseId:activeHoseId,name:wizDoseName.value.trim()||nextDoseName(activeRoom),type:wizDoseType.value,devices});document.querySelectorAll("#wizChecks input").forEach(x=>x.checked=false);wizDoseName.value="";wizardStep=next==="same"?4:next==="hose"?3:next==="room"?2:5;store();renderWizard()}
+function switchedOutputsForDose(d){let n=0;if(has(d,"Schalter"))n++;if(has(d,"Wechselschalter"))n++;if(has(d,"Serienschalter"))n+=2;return n}
+function renderKlemmen(){
+  if(!document.getElementById("klemmenList"))return;
+  let p=current(),rows="",nr=1;if(!p)return;
+  p.doses.forEach(d=>{let count=switchedOutputsForDose(d);for(let i=1;i<=count;i++){let label=count>1?`L${i} geschaltet`:"L geschaltet";rows+=`<tr><td>X${nr}</td><td>${esc(d.room)}</td><td>${esc(d.name)}</td><td>${label}</td><td>Schalter → Lampe</td></tr>`;nr++}});
+  klemmenList.innerHTML=rows?`<table><tr><th>Klemme</th><th>Raum</th><th>Dose/Schalter</th><th>Funktion</th><th>Verbindung</th></tr>${rows}</table><h3>Gesamt: ${nr-1} Reihenklemmen</h3>`:"<div class='muted'>Keine geschalteten Lichtgruppen erkannt.</div>";
+}
+
+ensure();renderAll();show("Wizard");
 </script>
 </body>
 </html>
